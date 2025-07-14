@@ -736,12 +736,19 @@ document.addEventListener("DOMContentLoaded", function () {
   updateUI();
 
   // Modal close functionality
-  $(".close").addEventListener("click", hideLogin);
-  $("#auth-modal").addEventListener("click", function (e) {
-    if (e.target === this) {
-      hideLogin();
-    }
-  });
+  const closeBtn = $(".close-btn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", hideLogin);
+  }
+
+  const authModal = $("#auth-modal");
+  if (authModal) {
+    authModal.addEventListener("click", function (e) {
+      if (e.target === this) {
+        hideLogin();
+      }
+    });
+  }
 
   // Login form
   $("#loginForm").addEventListener("submit", function (e) {
