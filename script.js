@@ -861,6 +861,84 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Initialize theme
+  initializeTheme();
+
+  // Signup form
+  const signupForm = $("#signupForm");
+  if (signupForm) {
+    signupForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      if (validateForm("#signupForm")) {
+        const formData = new FormData(this);
+        const userData = {
+          firstname: formData.get("firstname"),
+          lastname: formData.get("lastname"),
+          email: formData.get("email"),
+          role: formData.get("role"),
+          password: formData.get("password"),
+        };
+
+        // Simulate signup process
+        const submitBtn = this.querySelector(".auth-submit");
+        const btnText = submitBtn.querySelector(".btn-text");
+        const loader = submitBtn.querySelector(".btn-loader");
+
+        btnText.style.opacity = "0";
+        loader.style.display = "block";
+        submitBtn.disabled = true;
+
+        setTimeout(() => {
+          btnText.textContent = "Account Created!";
+          btnText.style.opacity = "1";
+          loader.style.display = "none";
+          submitBtn.style.background = "var(--accent-success)";
+
+          setTimeout(() => {
+            showNotification(
+              "Account created successfully! Please check your email.",
+              "success",
+            );
+            switchAuthTab("login");
+
+            // Reset form
+            this.reset();
+            btnText.textContent = "Create Account";
+            submitBtn.style.background = "";
+            submitBtn.disabled = false;
+          }, 1500);
+        }, 2000);
+      }
+    });
+  }
+
+  // Password strength checking
+  const signupPassword = $("#signup-password");
+  if (signupPassword) {
+    signupPassword.addEventListener("input", function () {
+      updatePasswordStrength("#signup-password");
+    });
+  }
+
+  // Real-time validation
+  $$('input[type="email"]').forEach((input) => {
+    input.addEventListener("blur", function () {
+      const feedback = this.parentElement.querySelector(".input-feedback");
+      if (feedback && this.value) {
+        if (validateEmail(this.value)) {
+          feedback.textContent = "✓ Valid email";
+          feedback.className = "input-feedback success";
+          this.style.borderColor = "#10b981";
+        } else {
+          feedback.textContent = "Please enter a valid email";
+          feedback.className = "input-feedback error";
+          this.style.borderColor = "#ef4444";
+        }
+      }
+    });
+  });
+
   // Initialize resources if on resources page
   if (AppState.currentPage === "resources") {
     renderResources();
