@@ -1847,3 +1847,267 @@ window.socialLogin = socialLogin;
 window.showForgotPassword = showForgotPassword;
 window.showTerms = showTerms;
 window.showPrivacy = showPrivacy;
+
+// Lecturer Dashboard Functions
+function initializeLecturerDashboard() {
+  // Initialize mini charts
+  initializeMiniCharts();
+
+  // Initialize analytics chart
+  initializeAnalyticsChart();
+
+  // Add event listeners for analytics tabs
+  $$(".analytics-tabs .tab-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      $$(".analytics-tabs .tab-btn").forEach((b) =>
+        b.classList.remove("active"),
+      );
+      this.classList.add("active");
+      updateAnalyticsChart(this.dataset.tab);
+    });
+  });
+
+  // Animate stat cards
+  setTimeout(() => {
+    animateLecturerStats();
+  }, 300);
+}
+
+function initializeMiniCharts() {
+  $$(".mini-chart").forEach((chart) => {
+    const values = JSON.parse(chart.dataset.values || "[0,0,0,0,0]");
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    const range = max - min || 1;
+
+    let chartHTML = '<svg viewBox="0 0 50 20" class="mini-chart-svg">';
+
+    // Create path
+    let pathData = "M ";
+    values.forEach((value, index) => {
+      const x = (index / (values.length - 1)) * 48 + 1;
+      const y = 19 - ((value - min) / range) * 18;
+      pathData += `${index === 0 ? "" : "L "}${x},${y} `;
+    });
+
+    chartHTML += `<path d="${pathData}" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.8"/>`;
+    chartHTML += "</svg>";
+
+    chart.innerHTML = chartHTML;
+  });
+}
+
+function initializeAnalyticsChart() {
+  const canvas = $("#engagement-chart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Sample data for engagement over time
+  const data = [65, 70, 75, 72, 80, 85, 92];
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+
+  // Draw chart
+  drawLineChart(ctx, data, labels, width, height);
+}
+
+function drawLineChart(ctx, data, labels, width, height) {
+  const padding = 30;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+
+  // Set styles
+  ctx.strokeStyle = "#7c3aed";
+  ctx.fillStyle = "rgba(124, 58, 237, 0.1)";
+  ctx.lineWidth = 2;
+
+  // Draw grid lines
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.lineWidth = 1;
+
+  // Vertical grid lines
+  for (let i = 0; i <= 6; i++) {
+    const x = padding + (i / 6) * chartWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, padding);
+    ctx.lineTo(x, height - padding);
+    ctx.stroke();
+  }
+
+  // Horizontal grid lines
+  for (let i = 0; i <= 4; i++) {
+    const y = padding + (i / 4) * chartHeight;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(width - padding, y);
+    ctx.stroke();
+  }
+
+  // Draw area fill
+  ctx.strokeStyle = "#7c3aed";
+  ctx.fillStyle = "rgba(124, 58, 237, 0.1)";
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    if (index === 0) {
+      ctx.moveTo(x, height - padding);
+      ctx.lineTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+
+  ctx.lineTo(width - padding, height - padding);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw line
+  ctx.beginPath();
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  // Draw points
+  ctx.fillStyle = "#7c3aed";
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw labels
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.font = "10px Inter";
+  ctx.textAlign = "center";
+
+  labels.forEach((label, index) => {
+    const x = padding + (index / (labels.length - 1)) * chartWidth;
+    ctx.fillText(label, x, height - 10);
+  });
+}
+
+function animateLecturerStats() {
+  const statCards = $$(".lecturer-stats-grid .stat-card");
+
+  statCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.animation = "fadeInUp 0.6s ease-out forwards";
+      card.style.opacity = "0";
+
+      setTimeout(() => {
+        card.style.opacity = "1";
+
+        // Animate the number
+        const numberElement = card.querySelector(".stat-number");
+        if (numberElement) {
+          const finalValue = parseInt(numberElement.textContent) || 0;
+          animateValue(numberElement, 0, finalValue, 1000);
+        }
+      }, 100);
+    }, index * 150);
+  });
+}
+
+function updateAnalyticsChart(period) {
+  // This would update the chart with different data based on the period
+  showNotification(`Analytics updated for ${period} view`, "info");
+}
+
+// Lecturer Action Functions
+function createNewCourse() {
+  showNotification("Course creation wizard coming soon!", "info");
+}
+
+function createAnnouncement() {
+  showNotification("Announcement system coming soon!", "info");
+}
+
+function refreshCourses() {
+  showNotification("Courses refreshed!", "success");
+  // Add refresh animation
+  const coursesCard = $(".courses-overview");
+  if (coursesCard) {
+    coursesCard.style.opacity = "0.5";
+    setTimeout(() => {
+      coursesCard.style.opacity = "1";
+    }, 500);
+  }
+}
+
+function manageAllCourses() {
+  showNotification("Course management interface coming soon!", "info");
+}
+
+function viewCourse(courseId) {
+  showNotification(`Opening course ${courseId} details...`, "info");
+}
+
+function editCourse(courseId) {
+  showNotification(`Editing course ${courseId}...`, "info");
+}
+
+function viewAllActivity() {
+  showNotification("Activity history coming soon!", "info");
+}
+
+function viewAllStudents() {
+  showNotification("Student management interface coming soon!", "info");
+}
+
+function gradeAssignments() {
+  showNotification("Grading interface coming soon!", "info");
+}
+
+function messageStudents() {
+  showNotification("Messaging system coming soon!", "info");
+}
+
+function scheduleClass() {
+  showNotification("Class scheduling coming soon!", "info");
+}
+
+function viewReports() {
+  showNotification("Detailed reports coming soon!", "info");
+}
+
+function viewAssignments() {
+  showNotification("Assignment viewer coming soon!", "info");
+}
+
+// Expose lecturer functions
+window.createNewCourse = createNewCourse;
+window.createAnnouncement = createAnnouncement;
+window.refreshCourses = refreshCourses;
+window.manageAllCourses = manageAllCourses;
+window.viewCourse = viewCourse;
+window.editCourse = editCourse;
+window.viewAllActivity = viewAllActivity;
+window.viewAllStudents = viewAllStudents;
+window.gradeAssignments = gradeAssignments;
+window.messageStudents = messageStudents;
+window.scheduleClass = scheduleClass;
+window.viewReports = viewReports;
+window.viewAssignments = viewAssignments;
