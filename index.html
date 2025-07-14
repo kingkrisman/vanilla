@@ -200,86 +200,121 @@
               <p>Track your progress and discover new learning opportunities</p>
             </div>
 
-            <!-- Stats Cards -->
+            <!-- Enhanced Stats Cards -->
             <div class="stats-grid">
-              <div class="stat-card">
+              <div class="stat-card" data-metric="resources">
                 <div class="stat-icon">📚</div>
                 <div class="stat-content">
                   <h3>Total Resources</h3>
                   <p class="stat-number">24</p>
+                  <span class="stat-trend">+12% this month</span>
                 </div>
               </div>
-              <div class="stat-card">
+              <div class="stat-card" data-metric="students">
                 <div class="stat-icon">👥</div>
                 <div class="stat-content">
-                  <h3>Students</h3>
+                  <h3>Active Students</h3>
                   <p class="stat-number">156</p>
+                  <span class="stat-trend">+8% this month</span>
                 </div>
               </div>
-              <div class="stat-card">
+              <div class="stat-card" data-metric="views">
                 <div class="stat-icon">📈</div>
                 <div class="stat-content">
                   <h3>Views This Week</h3>
                   <p class="stat-number">1,247</p>
+                  <span class="stat-trend">+23% from last week</span>
                 </div>
               </div>
-              <div class="stat-card">
+              <div class="stat-card" data-metric="rating">
                 <div class="stat-icon">⭐</div>
                 <div class="stat-content">
                   <h3>Average Rating</h3>
                   <p class="stat-number">4.8</p>
+                  <span class="stat-trend">Excellent feedback</span>
                 </div>
               </div>
             </div>
 
-            <!-- Recent Activity -->
+            <!-- Enhanced Recent Activity -->
             <div class="dashboard-grid">
-              <div class="card">
-                <h3>Recent Activity</h3>
+              <div class="card activity-card">
+                <div class="card-header">
+                  <h3>Recent Activity</h3>
+                  <span class="activity-badge">Live</span>
+                </div>
                 <div class="activity-list">
                   <div class="activity-item">
-                    <div class="activity-icon">📄</div>
+                    <div class="activity-icon upload">📄</div>
                     <div class="activity-content">
                       <p>
                         <strong>JavaScript Fundamentals</strong> was uploaded
                       </p>
                       <small>2 hours ago</small>
                     </div>
+                    <div class="activity-status new"></div>
                   </div>
                   <div class="activity-item">
-                    <div class="activity-icon">👤</div>
+                    <div class="activity-icon download">👤</div>
                     <div class="activity-content">
                       <p><strong>John Doe</strong> downloaded React Guide</p>
                       <small>4 hours ago</small>
                     </div>
+                    <div class="activity-status"></div>
                   </div>
                   <div class="activity-item">
-                    <div class="activity-icon">💬</div>
+                    <div class="activity-icon comment">💬</div>
                     <div class="activity-content">
                       <p>New comment on <strong>CSS Layouts</strong></p>
                       <small>1 day ago</small>
                     </div>
+                    <div class="activity-status"></div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon star">⭐</div>
+                    <div class="activity-content">
+                      <p>
+                        <strong>React Components Guide</strong> received 5 stars
+                      </p>
+                      <small>2 days ago</small>
+                    </div>
+                    <div class="activity-status"></div>
                   </div>
                 </div>
               </div>
 
-              <div class="card">
-                <h3>Quick Actions</h3>
+              <div class="card quick-actions-card">
+                <div class="card-header">
+                  <h3>Quick Actions</h3>
+                  <span class="actions-count">3 available</span>
+                </div>
                 <div class="quick-actions">
-                  <button class="action-btn" onclick="navigateToPage('upload')">
+                  <button
+                    class="action-btn primary"
+                    onclick="navigateToPage('upload')"
+                  >
                     <span>📤</span>
-                    Upload Resource
+                    <div class="action-text">
+                      <strong>Upload Resource</strong>
+                      <small>Share knowledge with students</small>
+                    </div>
                   </button>
                   <button
-                    class="action-btn"
+                    class="action-btn secondary"
                     onclick="navigateToPage('resources')"
                   >
                     <span>🔍</span>
-                    Browse Resources
+                    <div class="action-text">
+                      <strong>Browse Resources</strong>
+                      <small>Discover learning materials</small>
+                    </div>
                   </button>
-                  <button class="action-btn">
+                  <button class="action-btn tertiary" onclick="showAnalytics()">
                     <span>📊</span>
-                    View Analytics
+                    <div class="action-text">
+                      <strong>View Analytics</strong>
+                      <small>Track engagement metrics</small>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -298,24 +333,61 @@
               </p>
             </div>
 
-            <!-- Search and Filters -->
+            <!-- Enhanced Search and Filters -->
             <div class="search-section">
-              <div class="search-bar">
-                <input
-                  type="text"
-                  placeholder="Search resources..."
-                  id="search-input"
-                />
-                <button class="btn-primary">Search</button>
-              </div>
-              <div class="filters">
-                <select id="category-filter">
-                  <option value="">All Categories</option>
-                  <option value="javascript">JavaScript</option>
-                  <option value="react">React</option>
-                  <option value="css">CSS</option>
-                  <option value="html">HTML</option>
-                </select>
+              <div class="search-container">
+                <div class="search-bar">
+                  <div class="search-input-wrapper">
+                    <svg
+                      class="search-icon"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search resources, topics, or authors..."
+                      id="search-input"
+                    />
+                    <button
+                      class="search-clear"
+                      id="search-clear"
+                      style="display: none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <button class="btn-primary search-btn">Search</button>
+                </div>
+                <div class="filters-container">
+                  <div class="filter-group">
+                    <label>Category</label>
+                    <select id="category-filter">
+                      <option value="">All Categories</option>
+                      <option value="javascript">JavaScript</option>
+                      <option value="react">React</option>
+                      <option value="css">CSS</option>
+                      <option value="html">HTML</option>
+                      <option value="python">Python</option>
+                      <option value="design">Design</option>
+                    </select>
+                  </div>
+                  <div class="filter-group">
+                    <label>Sort by</label>
+                    <select id="sort-filter">
+                      <option value="recent">Most Recent</option>
+                      <option value="popular">Most Popular</option>
+                      <option value="rating">Highest Rated</option>
+                      <option value="downloads">Most Downloads</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
