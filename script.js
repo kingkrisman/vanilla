@@ -827,34 +827,42 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileUpload = $(".file-upload");
   const fileInput = $("#file");
 
-  fileUpload.addEventListener("click", () => fileInput.click());
+  if (fileUpload && fileInput) {
+    fileUpload.addEventListener("click", () => fileInput.click());
 
-  fileUpload.addEventListener("dragover", function (e) {
-    e.preventDefault();
-    this.style.borderColor = "#3a45df";
-  });
+    fileUpload.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      this.style.borderColor = "#3a45df";
+    });
 
-  fileUpload.addEventListener("dragleave", function (e) {
-    e.preventDefault();
-    this.style.borderColor = "#212530";
-  });
+    fileUpload.addEventListener("dragleave", function (e) {
+      e.preventDefault();
+      this.style.borderColor = "#212530";
+    });
 
-  fileUpload.addEventListener("drop", function (e) {
-    e.preventDefault();
-    this.style.borderColor = "#212530";
+    fileUpload.addEventListener("drop", function (e) {
+      e.preventDefault();
+      this.style.borderColor = "#212530";
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      fileInput.files = files;
-      $(".file-upload-text p").textContent = `Selected: ${files[0].name}`;
-    }
-  });
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        const fileText = $(".file-upload-text p");
+        if (fileText) {
+          fileText.textContent = `Selected: ${files[0].name}`;
+        }
+      }
+    });
 
-  fileInput.addEventListener("change", function () {
-    if (this.files.length > 0) {
-      $(".file-upload-text p").textContent = `Selected: ${this.files[0].name}`;
-    }
-  });
+    fileInput.addEventListener("change", function () {
+      if (this.files.length > 0) {
+        const fileText = $(".file-upload-text p");
+        if (fileText) {
+          fileText.textContent = `Selected: ${this.files[0].name}`;
+        }
+      }
+    });
+  }
 
   // Close dropdown when clicking outside
   document.addEventListener("click", function (e) {
