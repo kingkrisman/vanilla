@@ -1155,83 +1155,385 @@ function createLecturerDashboard() {
   `;
 }
 
-// Create student dashboard (simplified)
+// Create comprehensive student dashboard
 function createStudentDashboard() {
   return `
     <div class="student-dashboard">
-      <div class="page-header">
-        <h1>Student Dashboard</h1>
-        <p>Track your progress and discover new learning opportunities</p>
+      <!-- Student Header with Profile -->
+      <div class="student-header">
+        <div class="student-profile">
+          <div class="profile-avatar">
+            <span>${StudentData.profile.avatar}</span>
+            <div class="status-indicator online"></div>
+          </div>
+          <div class="profile-info">
+            <h1>Welcome back, ${StudentData.profile.name}!</h1>
+            <div class="profile-details">
+              <span class="student-id">${StudentData.profile.studentId}</span>
+              <span class="major">${StudentData.profile.major} • ${StudentData.profile.year}</span>
+              <span class="gpa">GPA: ${StudentData.profile.gpa}</span>
+            </div>
+            <div class="progress-summary">
+              <div class="credit-progress">
+                <span>Academic Progress</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${(StudentData.profile.creditsCompleted / StudentData.profile.creditsRequired) * 100}%"></div>
+                </div>
+                <small>${StudentData.profile.creditsCompleted}/${StudentData.profile.creditsRequired} credits</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="streak-badge">
+            <span class="streak-icon">🔥</span>
+            <div class="streak-info">
+              <span class="streak-number">${StudentData.stats.studyStreak}</span>
+              <span class="streak-label">Day Streak</span>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="startStudySession()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Start Studying
+          </button>
+        </div>
       </div>
 
-      <!-- Enhanced Stats Cards -->
-      <div class="stats-grid">
-        <div class="stat-card" data-metric="enrolled">
+      <!-- Enhanced Stats Grid -->
+      <div class="student-stats-grid">
+        <div class="stat-card primary" data-metric="courses">
           <div class="stat-icon">📚</div>
           <div class="stat-content">
             <h3>Enrolled Courses</h3>
-            <p class="stat-number">5</p>
-            <span class="stat-trend">2 completed</span>
+            <p class="stat-number">${StudentData.stats.enrolledCourses}</p>
+            <span class="stat-trend positive">${StudentData.courses.filter((c) => c.progress > 90).length} nearly complete</span>
+          </div>
+          <div class="stat-action">
+            <button class="btn-small" onclick="viewAllCourses()">View All</button>
           </div>
         </div>
-        <div class="stat-card" data-metric="progress">
+
+        <div class="stat-card warning" data-metric="assignments">
+          <div class="stat-icon">📝</div>
+          <div class="stat-content">
+            <h3>Pending Assignments</h3>
+            <p class="stat-number">${StudentData.stats.pendingAssignments}</p>
+            <span class="stat-trend attention">${StudentData.assignments.filter((a) => a.priority === "high").length} high priority</span>
+          </div>
+          <div class="stat-action">
+            <button class="btn-small" onclick="viewAssignments()">Manage</button>
+          </div>
+        </div>
+
+        <div class="stat-card success" data-metric="progress">
           <div class="stat-icon">📈</div>
           <div class="stat-content">
             <h3>Overall Progress</h3>
-            <p class="stat-number">78%</p>
-            <span class="stat-trend">+12% this month</span>
+            <p class="stat-number">${StudentData.stats.overallProgress}%</p>
+            <span class="stat-trend positive">Above average</span>
+          </div>
+          <div class="stat-action">
+            <button class="btn-small" onclick="viewAnalytics()">Details</button>
           </div>
         </div>
-        <div class="stat-card" data-metric="assignments">
-          <div class="stat-icon">📝</div>
-          <div class="stat-content">
-            <h3>Assignments Due</h3>
-            <p class="stat-number">3</p>
-            <span class="stat-trend">Due this week</span>
-          </div>
-        </div>
-        <div class="stat-card" data-metric="grade">
+
+        <div class="stat-card info" data-metric="grade">
           <div class="stat-icon">⭐</div>
           <div class="stat-content">
             <h3>Average Grade</h3>
-            <p class="stat-number">A-</p>
-            <span class="stat-trend">Excellent work!</span>
+            <p class="stat-number">${StudentData.stats.averageGrade}</p>
+            <span class="stat-trend positive">Excellent work!</span>
+          </div>
+          <div class="stat-action">
+            <button class="btn-small" onclick="viewGrades()">Grades</button>
           </div>
         </div>
       </div>
 
-      <!-- Student-specific content -->
-      <div class="dashboard-grid">
-        <div class="card">
-          <h3>Recent Activity</h3>
-          <div class="activity-list">
-            <div class="activity-item">
-              <div class="activity-icon download">📄</div>
-              <div class="activity-content">
-                <p>Downloaded <strong>JavaScript Fundamentals</strong></p>
-                <small>2 hours ago</small>
+      <!-- Main Student Dashboard Grid -->
+      <div class="student-main-grid">
+        <!-- Today's Schedule -->
+        <div class="card schedule-card">
+          <div class="card-header">
+            <h3>Today's Schedule</h3>
+            <div class="schedule-date">
+              <span>${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span>
+            </div>
+          </div>
+          <div class="schedule-list">
+            ${StudentData.schedule
+              .map(
+                (item) => `
+              <div class="schedule-item ${item.type}">
+                <div class="schedule-time">${item.time}</div>
+                <div class="schedule-content">
+                  <h4>${item.title}</h4>
+                  <span class="schedule-duration">${item.duration} min</span>
+                </div>
+                <div class="schedule-type ${item.type}">${item.type.charAt(0).toUpperCase()}</div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewFullSchedule()">View full schedule</button>
+          </div>
+        </div>
+
+        <!-- Assignments Dashboard -->
+        <div class="card assignments-card">
+          <div class="card-header">
+            <h3>Upcoming Assignments</h3>
+            <button class="btn-icon" onclick="addNewAssignment()" title="Add Assignment">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="assignments-list">
+            ${StudentData.assignments
+              .slice(0, 4)
+              .map(
+                (assignment) => `
+              <div class="assignment-item ${assignment.priority}" data-assignment-id="${assignment.id}">
+                <div class="assignment-info">
+                  <div class="assignment-header">
+                    <h4>${assignment.title}</h4>
+                    <span class="assignment-course">${assignment.course}</span>
+                  </div>
+                  <div class="assignment-meta">
+                    <span class="assignment-type">${assignment.type}</span>
+                    <span class="assignment-due">Due: ${new Date(assignment.dueDate).toLocaleDateString()}</span>
+                  </div>
+                  <div class="assignment-progress">
+                    <div class="progress-bar small">
+                      <div class="progress-fill" style="width: ${assignment.progress}%"></div>
+                    </div>
+                    <span class="progress-text">${assignment.progress}%</span>
+                  </div>
+                </div>
+                <div class="assignment-actions">
+                  <button class="btn-icon" onclick="editAssignment(${assignment.id})" title="Edit">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <div class="priority-indicator ${assignment.priority}"></div>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllAssignments()">View all assignments</button>
+          </div>
+        </div>
+
+        <!-- Course Progress -->
+        <div class="card courses-card">
+          <div class="card-header">
+            <h3>Course Progress</h3>
+            <button class="btn-small" onclick="enrollInCourse()">Enroll</button>
+          </div>
+          <div class="courses-list">
+            ${StudentData.courses
+              .slice(0, 3)
+              .map(
+                (course) => `
+              <div class="course-item" style="border-left: 4px solid ${course.color}">
+                <div class="course-info">
+                  <div class="course-header">
+                    <h4>${course.code}</h4>
+                    <span class="course-grade grade-${course.grade.replace("+", "plus").replace("-", "minus")}">${course.grade}</span>
+                  </div>
+                  <p class="course-name">${course.name}</p>
+                  <small class="course-instructor">${course.instructor}</small>
+                  <div class="course-schedule">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    ${course.schedule}
+                  </div>
+                </div>
+                <div class="course-progress">
+                  <div class="progress-circle" data-progress="${course.progress}">
+                    <svg viewBox="0 0 36 36">
+                      <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path class="circle" stroke-dasharray="${course.progress}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="percentage">${course.progress}%</div>
+                  </div>
+                  <div class="course-stats">
+                    <small>${course.assignments} assignments</small>
+                    <small>${course.credits} credits</small>
+                  </div>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllCourses()">View all courses</button>
+          </div>
+        </div>
+
+        <!-- Study Analytics -->
+        <div class="card analytics-card">
+          <div class="card-header">
+            <h3>Study Analytics</h3>
+            <div class="analytics-period">
+              <select id="analytics-period" onchange="updateStudyAnalytics(this.value)">
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="semester">This Semester</option>
+              </select>
+            </div>
+          </div>
+          <div class="analytics-content">
+            <div class="study-summary">
+              <div class="summary-stat">
+                <span class="stat-value">${StudentData.stats.totalStudyHours}h</span>
+                <span class="stat-label">Total Study Time</span>
+              </div>
+              <div class="summary-stat">
+                <span class="stat-value">${Math.round(StudentData.stats.totalStudyHours / 7)}h</span>
+                <span class="stat-label">Daily Average</span>
+              </div>
+              <div class="summary-stat">
+                <span class="stat-value">${StudentData.stats.studyStreak}</span>
+                <span class="stat-label">Day Streak</span>
               </div>
             </div>
-            <div class="activity-item">
-              <div class="activity-icon grade">✅</div>
-              <div class="activity-content">
-                <p>Received grade for <strong>React Assignment</strong></p>
-                <small>1 day ago</small>
-              </div>
+            <div class="study-chart">
+              <canvas id="study-chart" width="280" height="120"></canvas>
+            </div>
+            <div class="study-subjects">
+              ${StudentData.studyPlan
+                .map(
+                  (subject) => `
+                <div class="subject-time">
+                  <div class="subject-info">
+                    <span class="subject-name">${subject.subject}</span>
+                    <span class="time-ratio">${subject.timeSpent}/${subject.timeAllocated}min</span>
+                  </div>
+                  <div class="efficiency-bar">
+                    <div class="efficiency-fill" style="width: ${subject.efficiency}%"></div>
+                  </div>
+                  <span class="efficiency-score">${subject.efficiency}%</span>
+                </div>
+              `,
+                )
+                .join("")}
             </div>
           </div>
         </div>
 
-        <div class="card">
-          <h3>Quick Actions</h3>
-          <div class="quick-actions">
-            <button class="action-btn" onclick="navigateToPage('resources')">
-              <span>🔍</span>
-              Browse Resources
+        <!-- Recent Activity -->
+        <div class="card activity-card">
+          <div class="card-header">
+            <h3>Recent Activity</h3>
+            <span class="activity-badge live">Live</span>
+          </div>
+          <div class="activity-list">
+            ${StudentData.recentActivity
+              .map(
+                (activity) => `
+              <div class="activity-item ${activity.isNew ? "new" : ""}">
+                <div class="activity-icon ${activity.type}">${activity.icon}</div>
+                <div class="activity-content">
+                  <p><strong>${activity.title}</strong> ${activity.description}</p>
+                  <small>${activity.time}</small>
+                </div>
+                <div class="activity-status ${activity.isNew ? "new" : ""}"></div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllActivity()">View all activity</button>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="card achievements-card">
+          <div class="card-header">
+            <h3>Achievements</h3>
+            <span class="achievement-count">${StudentData.achievements.filter((a) => a.earned).length}/${StudentData.achievements.length}</span>
+          </div>
+          <div class="achievements-list">
+            ${StudentData.achievements
+              .map(
+                (achievement) => `
+              <div class="achievement-item ${achievement.earned ? "earned" : "locked"}">
+                <div class="achievement-icon">
+                  <span>${achievement.icon}</span>
+                  ${achievement.earned ? '<div class="earned-indicator">✓</div>' : ""}
+                </div>
+                <div class="achievement-info">
+                  <h4>${achievement.title}</h4>
+                  <p>${achievement.description}</p>
+                  ${
+                    achievement.earned
+                      ? `<small>Earned on ${new Date(achievement.date).toLocaleDateString()}</small>`
+                      : achievement.progress
+                        ? `<div class="achievement-progress">
+                        <div class="progress-bar mini">
+                          <div class="progress-fill" style="width: ${achievement.progress}%"></div>
+                        </div>
+                        <span>${achievement.progress}%</span>
+                      </div>`
+                        : "<small>Not earned yet</small>"
+                  }
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllAchievements()">View all achievements</button>
+          </div>
+        </div>
+
+        <!-- Quick Tools -->
+        <div class="card tools-card">
+          <div class="card-header">
+            <h3>Study Tools</h3>
+          </div>
+          <div class="tools-grid">
+            <button class="tool-btn" onclick="openNotepad()">
+              <span class="tool-icon">📝</span>
+              <span class="tool-name">Quick Notes</span>
             </button>
-            <button class="action-btn" onclick="viewAssignments()">
-              <span>📝</span>
-              View Assignments
+            <button class="tool-btn" onclick="openCalculator()">
+              <span class="tool-icon">🧮</span>
+              <span class="tool-name">Calculator</span>
+            </button>
+            <button class="tool-btn" onclick="openPomodoroTimer()">
+              <span class="tool-icon">⏰</span>
+              <span class="tool-name">Pomodoro</span>
+            </button>
+            <button class="tool-btn" onclick="openStudyGroups()">
+              <span class="tool-icon">👥</span>
+              <span class="tool-name">Study Groups</span>
+            </button>
+            <button class="tool-btn" onclick="openLibrary()">
+              <span class="tool-icon">📚</span>
+              <span class="tool-name">Library</span>
+            </button>
+            <button class="tool-btn" onclick="openMessaging()">
+              <span class="tool-icon">💬</span>
+              <span class="tool-name">Messages</span>
             </button>
           </div>
         </div>
