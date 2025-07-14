@@ -656,7 +656,124 @@ document.addEventListener("DOMContentLoaded", function () {
   if (AppState.currentPage === "resources") {
     renderResources();
   }
+
+  // Add interactive effects
+  addInteractiveEffects();
+
+  // Add parallax effect (disabled on mobile for performance)
+  if (window.innerWidth > 768) {
+    addParallaxEffect();
+  }
+
+  // Animate dashboard on initial load if user is logged in
+  if (AppState.user && AppState.currentPage === "dashboard") {
+    setTimeout(() => {
+      animateDashboardStats();
+    }, 500);
+  }
 });
+
+// Dashboard animations
+function animateDashboardStats() {
+  const statCards = $$(".stat-card");
+  const statNumbers = $$(".stat-number");
+
+  statCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.animation = "fadeInUp 0.6s ease-out forwards";
+      card.style.opacity = "0";
+
+      setTimeout(() => {
+        card.style.opacity = "1";
+      }, 100);
+    }, index * 150);
+  });
+
+  // Animate numbers counting up
+  setTimeout(() => {
+    const numbers = [24, 156, 1247, 4.8];
+    statNumbers.forEach((element, index) => {
+      const endValue = numbers[index];
+      animateValue(element, 0, endValue, 1500);
+    });
+  }, 500);
+
+  // Animate activity items
+  setTimeout(() => {
+    const activityItems = $$(".activity-item");
+    activityItems.forEach((item, index) => {
+      setTimeout(() => {
+        item.style.animation = "slideInRight 0.5s ease-out forwards";
+      }, index * 100);
+    });
+  }, 1000);
+}
+
+// Enhanced interactions
+function addInteractiveEffects() {
+  // Add ripple effect to buttons
+  $$("button, .btn-primary, .btn-secondary, .btn-ghost").forEach((button) => {
+    button.addEventListener("click", function (e) {
+      if (!this.disabled) {
+        createRippleEffect(this, e);
+      }
+    });
+  });
+
+  // Add hover sound effect (visual feedback)
+  $$(".nav-link, .action-btn, .resource-card").forEach((element) => {
+    element.addEventListener("mouseenter", function () {
+      this.style.transform = "translateY(-2px)";
+    });
+
+    element.addEventListener("mouseleave", function () {
+      this.style.transform = "";
+    });
+  });
+
+  // Enhanced form validation feedback
+  $$("input, textarea, select").forEach((input) => {
+    input.addEventListener("invalid", function () {
+      this.style.animation = "shake 0.5s ease-in-out";
+      setTimeout(() => (this.style.animation = ""), 500);
+    });
+
+    input.addEventListener("input", function () {
+      if (this.validity.valid) {
+        this.style.borderColor = "var(--accent-success)";
+      } else {
+        this.style.borderColor = "";
+      }
+    });
+  });
+}
+
+// Parallax scrolling effect
+function addParallaxEffect() {
+  let ticking = false;
+
+  function updateParallax() {
+    const scrolled = window.pageYOffset;
+    const parallaxElements = $$(".stat-card, .card");
+
+    parallaxElements.forEach((element, index) => {
+      const speed = 0.5 + index * 0.1;
+      const yPos = -((scrolled * speed) / 10);
+      element.style.transform = `translateY(${yPos}px)`;
+    });
+
+    ticking = false;
+  }
+
+  function requestTick() {
+    if (!ticking) {
+      requestAnimationFrame(updateParallax);
+      ticking = true;
+    }
+  }
+
+  window.addEventListener("scroll", requestTick);
+}
 
 // Expose functions to global scope for inline event handlers
 window.showLogin = showLogin;
@@ -668,3 +785,4 @@ window.navigateToPage = navigateToPage;
 window.toggleDropdown = toggleDropdown;
 window.downloadResource = downloadResource;
 window.viewResource = viewResource;
+window.animateDashboardStats = animateDashboardStats;
