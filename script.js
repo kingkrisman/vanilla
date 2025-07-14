@@ -539,55 +539,119 @@ function updateDashboardContent() {
 function createLecturerDashboard() {
   return `
     <div class="lecturer-dashboard">
-            <!-- Lecturer Header -->
-      <div class="page-header lecturer-header">
-        <div class="header-content">
-          <h1>Lecturer Dashboard</h1>
-          <p>Manage your courses, students, and educational content effectively</p>
-          <div class="subtitle-stats">
-            <div class="subtitle-stat">
-              <span class="stat-icon">📚</span>
-              <span class="stat-value">${LecturerData.stats.coursesManaged}</span>
-              <span>Active Courses</span>
+                  <!-- Redesigned Lecturer Header -->
+      <div class="lecturer-header-container">
+        <!-- Main Header Section -->
+        <div class="lecturer-header-main">
+          <div class="header-branding">
+            <div class="welcome-section">
+              <h1>Welcome back, Dr. Smith</h1>
+              <p>Ready to inspire minds today?</p>
             </div>
-            <div class="subtitle-stat">
-              <span class="stat-icon">👥</span>
-              <span class="stat-value">${LecturerData.stats.activeStudents}</span>
-              <span>Students</span>
+            <div class="quick-stats-inline">
+              <div class="inline-stat">
+                <span class="stat-number">${LecturerData.stats.coursesManaged}</span>
+                <span class="stat-label">Courses</span>
+              </div>
+              <div class="inline-stat">
+                <span class="stat-number">${LecturerData.stats.activeStudents}</span>
+                <span class="stat-label">Students</span>
+              </div>
+              <div class="inline-stat">
+                <span class="stat-number">${LecturerData.stats.pendingAssignments}</span>
+                <span class="stat-label">Pending</span>
+              </div>
             </div>
-            <div class="subtitle-stat">
-              <span class="stat-icon">⭐</span>
-              <span class="stat-value">${LecturerData.stats.averageRating}/5</span>
-              <span>Rating</span>
+          </div>
+
+          <div class="header-actions-redesigned">
+            <button class="action-btn-primary" onclick="navigateToPage('upload')">
+              <div class="btn-icon-wrapper">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" x2="12" y1="3" y2="15"></line>
+                </svg>
+              </div>
+              <div class="btn-content">
+                <span class="btn-title">Upload Resource</span>
+                <span class="btn-subtitle">Share new content</span>
+              </div>
+            </button>
+
+            <div class="secondary-actions">
+              <button class="action-btn-secondary" onclick="createNewCourse()" title="Create New Course">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>New Course</span>
+              </button>
+              <button class="action-btn-secondary" onclick="createAnnouncement()" title="Create Announcement">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                </svg>
+                <span>Announce</span>
+              </button>
+              <button class="action-btn-secondary" onclick="gradeAssignments()" title="Grade Assignments">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11l3 3L22 4"></path>
+                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                </svg>
+                <span>Grade</span>
+                ${LecturerData.stats.pendingAssignments > 0 ? `<span class="notification-badge">${LecturerData.stats.pendingAssignments}</span>` : ""}
+              </button>
             </div>
           </div>
         </div>
-        <div class="header-actions">
-          <div class="action-row primary">
-            <button class="btn-primary" onclick="navigateToPage('upload')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" x2="12" y1="3" y2="15"></line>
-              </svg>
-              Upload Resource
-            </button>
+
+        <!-- Quick Navigation Bar -->
+        <div class="lecturer-nav-bar">
+          <div class="nav-section">
+            <span class="nav-label">Quick Access:</span>
+            <div class="nav-links">
+              <a href="#" class="nav-link active" onclick="showCourseOverview()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 7l10-4 10 4v10l-10 4-10-4V7z"></path>
+                  <path d="M12 22V12"></path>
+                  <path d="M22 7l-10 5L2 7"></path>
+                </svg>
+                Courses
+              </a>
+              <a href="#" class="nav-link" onclick="viewAllStudents()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 010 7.75"></path>
+                </svg>
+                Students
+              </a>
+              <a href="#" class="nav-link" onclick="navigateToPage('resources')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                Resources
+              </a>
+              <a href="#" class="nav-link" onclick="viewReports()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Analytics
+              </a>
+            </div>
           </div>
-          <div class="action-row secondary">
-            <button class="btn-secondary" onclick="createNewCourse()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="16"></line>
-                <line x1="8" y1="12" x2="16" y2="12"></line>
-              </svg>
-              New Course
-            </button>
-            <button class="btn-secondary" onclick="createAnnouncement()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
-              </svg>
-              Announcement
-            </button>
+
+          <div class="nav-status">
+            <div class="status-indicator">
+              <div class="status-dot online"></div>
+              <span>Online</span>
+            </div>
+            <div class="last-active">
+              <span>Last active: Just now</span>
+            </div>
           </div>
         </div>
       </div>
