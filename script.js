@@ -357,6 +357,114 @@ function navigateToPage(page) {
   }, 150);
 }
 
+// Enhanced dashboard data for lecturers
+const LecturerData = {
+  stats: {
+    totalResources: 42,
+    activeStudents: 156,
+    weeklyViews: 2847,
+    averageRating: 4.8,
+    coursesManaged: 8,
+    pendingAssignments: 23,
+    totalDownloads: 3421,
+    studentEngagement: 92,
+  },
+  recentActivities: [
+    {
+      type: "upload",
+      icon: "📄",
+      title: "Advanced React Patterns",
+      description: "New resource uploaded",
+      time: "2 hours ago",
+      isNew: true,
+    },
+    {
+      type: "student",
+      icon: "👤",
+      title: "Sarah Wilson",
+      description: "Downloaded JavaScript Fundamentals",
+      time: "4 hours ago",
+      isNew: false,
+    },
+    {
+      type: "comment",
+      icon: "💬",
+      title: "CSS Grid Layout",
+      description: "New question posted",
+      time: "6 hours ago",
+      isNew: true,
+    },
+    {
+      type: "rating",
+      icon: "⭐",
+      title: "Python Basics",
+      description: "Received 5-star rating",
+      time: "1 day ago",
+      isNew: false,
+    },
+    {
+      type: "assignment",
+      icon: "📝",
+      title: "Web Development Assignment",
+      description: "Due in 2 days (5 submissions pending)",
+      time: "2 days ago",
+      isNew: false,
+    },
+  ],
+  courses: [
+    {
+      id: 1,
+      name: "Web Development Fundamentals",
+      students: 45,
+      progress: 78,
+      status: "active",
+      nextClass: "2024-01-20 14:00",
+    },
+    {
+      id: 2,
+      name: "Advanced JavaScript",
+      students: 32,
+      progress: 65,
+      status: "active",
+      nextClass: "2024-01-22 10:00",
+    },
+    {
+      id: 3,
+      name: "React Development",
+      students: 28,
+      progress: 45,
+      status: "active",
+      nextClass: "2024-01-21 16:00",
+    },
+  ],
+  topStudents: [
+    {
+      name: "Sarah Wilson",
+      score: 98,
+      course: "Web Dev Fundamentals",
+      avatar: "SW",
+    },
+    {
+      name: "Mike Chen",
+      score: 95,
+      course: "Advanced JavaScript",
+      avatar: "MC",
+    },
+    {
+      name: "Emma Davis",
+      score: 94,
+      course: "React Development",
+      avatar: "ED",
+    },
+    {
+      name: "John Smith",
+      score: 92,
+      course: "Web Dev Fundamentals",
+      avatar: "JS",
+    },
+  ],
+};
+
 // UI Update functions
 function updateUI() {
   const user = AppState.user;
@@ -389,13 +497,461 @@ function updateUI() {
       $("#user-badge").style.background = "rgba(158, 163, 174, 0.2)";
       $("#user-badge").style.color = "#fafafa";
     }
+
+    // Update dashboard content based on role
+    updateDashboardContent();
   } else {
     // Show unauthenticated UI
     showElement("#auth-buttons");
     hideElement("#user-menu");
     hideElement("#main-nav");
     hideElement("#user-badge");
+
+    // Show default dashboard
+    updateDashboardContent();
   }
+}
+
+// Dashboard content management
+function updateDashboardContent() {
+  const user = AppState.user;
+  const dashboardContent = $("#dashboard-content");
+
+  if (!dashboardContent) return;
+
+  if (user && user.role === "lecturer") {
+    dashboardContent.innerHTML = createLecturerDashboard();
+    // Initialize lecturer-specific features
+    setTimeout(() => {
+      initializeLecturerDashboard();
+    }, 100);
+  } else if (user && user.role === "student") {
+    dashboardContent.innerHTML = createStudentDashboard();
+    setTimeout(() => {
+      animateDashboardStats();
+    }, 100);
+  } else {
+    dashboardContent.innerHTML = createGuestDashboard();
+  }
+}
+
+// Create lecturer dashboard HTML
+function createLecturerDashboard() {
+  return `
+    <div class="lecturer-dashboard">
+      <!-- Lecturer Header -->
+      <div class="page-header lecturer-header">
+        <div class="header-content">
+          <h1>Lecturer Dashboard</h1>
+          <p>Manage your courses, students, and educational content</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-primary" onclick="navigateToPage('upload')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" x2="12" y1="3" y2="15"></line>
+            </svg>
+            Upload Resource
+          </button>
+          <button class="btn-secondary" onclick="createNewCourse()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            New Course
+          </button>
+          <button class="btn-secondary" onclick="createAnnouncement()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+            </svg>
+            Announcement
+          </button>
+        </div>
+      </div>
+
+      <!-- Lecturer Stats Grid -->
+      <div class="lecturer-stats-grid">
+        <div class="stat-card primary" data-metric="resources">
+          <div class="stat-icon">📚</div>
+          <div class="stat-content">
+            <h3>Total Resources</h3>
+            <p class="stat-number">${LecturerData.stats.totalResources}</p>
+            <span class="stat-trend positive">+15% this month</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[20,25,30,35,42]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card secondary" data-metric="students">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <h3>Active Students</h3>
+            <p class="stat-number">${LecturerData.stats.activeStudents}</p>
+            <span class="stat-trend positive">+8% this month</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[140,145,150,155,156]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card accent" data-metric="engagement">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <h3>Student Engagement</h3>
+            <p class="stat-number">${LecturerData.stats.studentEngagement}%</p>
+            <span class="stat-trend positive">+5% this week</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[85,88,90,91,92]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card warning" data-metric="assignments">
+          <div class="stat-icon">📝</div>
+          <div class="stat-content">
+            <h3>Pending Reviews</h3>
+            <p class="stat-number">${LecturerData.stats.pendingAssignments}</p>
+            <span class="stat-trend neutral">Needs attention</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[30,28,25,24,23]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card success" data-metric="rating">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h3>Average Rating</h3>
+            <p class="stat-number">${LecturerData.stats.averageRating}</p>
+            <span class="stat-trend positive">Excellent feedback</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[4.5,4.6,4.7,4.7,4.8]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card info" data-metric="courses">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-content">
+            <h3>Active Courses</h3>
+            <p class="stat-number">${LecturerData.stats.coursesManaged}</p>
+            <span class="stat-trend neutral">3 starting soon</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[6,7,7,8,8]"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Grid -->
+      <div class="lecturer-main-grid">
+        <!-- Courses Overview -->
+        <div class="card courses-overview">
+          <div class="card-header">
+            <h3>My Courses</h3>
+            <div class="header-actions">
+              <button class="btn-icon" onclick="refreshCourses()" title="Refresh">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                </svg>
+              </button>
+              <button class="btn-small" onclick="manageAllCourses()">Manage All</button>
+            </div>
+          </div>
+          <div class="courses-list">
+            ${LecturerData.courses
+              .map(
+                (course) => `
+              <div class="course-item" data-course-id="${course.id}">
+                <div class="course-info">
+                  <h4>${course.name}</h4>
+                  <div class="course-meta">
+                    <span class="student-count">${course.students} students</span>
+                    <span class="next-class">Next: ${new Date(course.nextClass).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div class="course-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${course.progress}%"></div>
+                  </div>
+                  <span class="progress-text">${course.progress}% complete</span>
+                </div>
+                <div class="course-actions">
+                  <button class="btn-icon" onclick="viewCourse(${course.id})" title="View Course">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                  <button class="btn-icon" onclick="editCourse(${course.id})" title="Edit Course">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card activity-card">
+          <div class="card-header">
+            <h3>Recent Activity</h3>
+            <span class="activity-badge live">Live</span>
+          </div>
+          <div class="activity-list">
+            ${LecturerData.recentActivities
+              .map(
+                (activity) => `
+              <div class="activity-item ${activity.isNew ? "new" : ""}">
+                <div class="activity-icon ${activity.type}">${activity.icon}</div>
+                <div class="activity-content">
+                  <p><strong>${activity.title}</strong> ${activity.description}</p>
+                  <small>${activity.time}</small>
+                </div>
+                <div class="activity-status ${activity.isNew ? "new" : ""}"></div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllActivity()">View all activity</button>
+          </div>
+        </div>
+
+        <!-- Top Students -->
+        <div class="card students-card">
+          <div class="card-header">
+            <h3>Top Performing Students</h3>
+            <button class="btn-small" onclick="viewAllStudents()">View All</button>
+          </div>
+          <div class="students-list">
+            ${LecturerData.topStudents
+              .map(
+                (student, index) => `
+              <div class="student-item">
+                <div class="student-rank">#${index + 1}</div>
+                <div class="student-avatar">${student.avatar}</div>
+                <div class="student-info">
+                  <h4>${student.name}</h4>
+                  <small>${student.course}</small>
+                </div>
+                <div class="student-score">
+                  <span class="score">${student.score}%</span>
+                  <div class="score-bar">
+                    <div class="score-fill" style="width: ${student.score}%"></div>
+                  </div>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <!-- Analytics Overview -->
+        <div class="card analytics-card">
+          <div class="card-header">
+            <h3>Analytics Overview</h3>
+            <div class="analytics-tabs">
+              <button class="tab-btn active" data-tab="weekly">Week</button>
+              <button class="tab-btn" data-tab="monthly">Month</button>
+              <button class="tab-btn" data-tab="yearly">Year</button>
+            </div>
+          </div>
+          <div class="analytics-content">
+            <div class="analytics-chart">
+              <canvas id="engagement-chart" width="300" height="150"></canvas>
+            </div>
+            <div class="analytics-summary">
+              <div class="summary-item">
+                <span class="label">Total Views</span>
+                <span class="value">${LecturerData.stats.weeklyViews.toLocaleString()}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Downloads</span>
+                <span class="value">${LecturerData.stats.totalDownloads.toLocaleString()}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Engagement Rate</span>
+                <span class="value">${LecturerData.stats.studentEngagement}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card quick-actions-card enhanced">
+          <div class="card-header">
+            <h3>Quick Actions</h3>
+            <span class="actions-count">${6} available</span>
+          </div>
+          <div class="quick-actions grid">
+            <button class="action-btn primary" onclick="navigateToPage('upload')">
+              <span>📤</span>
+              <div class="action-text">
+                <strong>Upload Resource</strong>
+                <small>Share new content</small>
+              </div>
+            </button>
+            <button class="action-btn secondary" onclick="createNewCourse()">
+              <span>🎓</span>
+              <div class="action-text">
+                <strong>Create Course</strong>
+                <small>Start a new class</small>
+              </div>
+            </button>
+            <button class="action-btn accent" onclick="gradeAssignments()">
+              <span>📝</span>
+              <div class="action-text">
+                <strong>Grade Work</strong>
+                <small>${LecturerData.stats.pendingAssignments} pending</small>
+              </div>
+            </button>
+            <button class="action-btn info" onclick="messageStudents()">
+              <span>💬</span>
+              <div class="action-text">
+                <strong>Message Students</strong>
+                <small>Send announcements</small>
+              </div>
+            </button>
+            <button class="action-btn warning" onclick="scheduleClass()">
+              <span>📅</span>
+              <div class="action-text">
+                <strong>Schedule Class</strong>
+                <small>Book meeting time</small>
+              </div>
+            </button>
+            <button class="action-btn success" onclick="viewReports()">
+              <span>📊</span>
+              <div class="action-text">
+                <strong>View Reports</strong>
+                <small>Detailed analytics</small>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Create student dashboard (simplified)
+function createStudentDashboard() {
+  return `
+    <div class="student-dashboard">
+      <div class="page-header">
+        <h1>Student Dashboard</h1>
+        <p>Track your progress and discover new learning opportunities</p>
+      </div>
+
+      <!-- Enhanced Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card" data-metric="enrolled">
+          <div class="stat-icon">📚</div>
+          <div class="stat-content">
+            <h3>Enrolled Courses</h3>
+            <p class="stat-number">5</p>
+            <span class="stat-trend">2 completed</span>
+          </div>
+        </div>
+        <div class="stat-card" data-metric="progress">
+          <div class="stat-icon">📈</div>
+          <div class="stat-content">
+            <h3>Overall Progress</h3>
+            <p class="stat-number">78%</p>
+            <span class="stat-trend">+12% this month</span>
+          </div>
+        </div>
+        <div class="stat-card" data-metric="assignments">
+          <div class="stat-icon">📝</div>
+          <div class="stat-content">
+            <h3>Assignments Due</h3>
+            <p class="stat-number">3</p>
+            <span class="stat-trend">Due this week</span>
+          </div>
+        </div>
+        <div class="stat-card" data-metric="grade">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h3>Average Grade</h3>
+            <p class="stat-number">A-</p>
+            <span class="stat-trend">Excellent work!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student-specific content -->
+      <div class="dashboard-grid">
+        <div class="card">
+          <h3>Recent Activity</h3>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon download">📄</div>
+              <div class="activity-content">
+                <p>Downloaded <strong>JavaScript Fundamentals</strong></p>
+                <small>2 hours ago</small>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon grade">✅</div>
+              <div class="activity-content">
+                <p>Received grade for <strong>React Assignment</strong></p>
+                <small>1 day ago</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Quick Actions</h3>
+          <div class="quick-actions">
+            <button class="action-btn" onclick="navigateToPage('resources')">
+              <span>🔍</span>
+              Browse Resources
+            </button>
+            <button class="action-btn" onclick="viewAssignments()">
+              <span>📝</span>
+              View Assignments
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Create guest dashboard
+function createGuestDashboard() {
+  return `
+    <div class="guest-dashboard">
+      <div class="page-header">
+        <h1>Welcome to AcademicHub</h1>
+        <p>Your gateway to educational excellence</p>
+      </div>
+
+      <div class="welcome-content">
+        <div class="card welcome-card">
+          <h3>Get Started</h3>
+          <p>Join thousands of students and educators in our learning community.</p>
+          <div class="welcome-actions">
+            <button class="btn-primary" onclick="showLogin()">Sign In</button>
+            <button class="btn-secondary" onclick="navigateToPage('resources')">Browse Resources</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // Dropdown functions
