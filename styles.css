@@ -184,6 +184,8 @@ body::before {
   justify-content: center;
   opacity: 0;
   animation: modalFadeIn var(--transition-normal) forwards;
+  overflow-y: auto;
+  padding: var(--space-4);
 }
 
 @keyframes modalFadeIn {
@@ -198,12 +200,19 @@ body::before {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   padding: var(--space-8);
-  width: 90%;
+  width: 100%;
   max-width: 420px;
   position: relative;
   box-shadow: var(--shadow-xl);
   transform: translateY(-20px);
   animation: modalSlideIn var(--transition-normal) forwards;
+  margin: auto;
+}
+
+.modal-content.auth-modal {
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 @keyframes modalSlideIn {
@@ -212,26 +221,82 @@ body::before {
   }
 }
 
-.close {
+.close-btn {
   position: absolute;
   right: var(--space-4);
   top: var(--space-4);
-  font-size: var(--font-size-xl);
-  cursor: pointer;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   color: var(--neutral-400);
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
+  cursor: pointer;
   transition: all var(--transition-fast);
+  z-index: 10;
 }
 
-.close:hover {
+.close-btn:hover {
   color: var(--neutral-50);
   background: var(--bg-hover);
+  border-color: var(--primary-500);
   transform: rotate(90deg);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary-500);
+  transform: scale(1.05);
+}
+
+.theme-icon {
+  color: var(--neutral-400);
+  transition: all var(--transition-fast);
+  position: absolute;
+}
+
+.theme-toggle:hover .theme-icon {
+  color: var(--primary-400);
+}
+
+.sun-icon {
+  opacity: 1;
+  transform: rotate(0deg);
+}
+
+.moon-icon {
+  opacity: 0;
+  transform: rotate(180deg);
+}
+
+.dark-mode .sun-icon {
+  opacity: 0;
+  transform: rotate(-180deg);
+}
+
+.dark-mode .moon-icon {
+  opacity: 1;
+  transform: rotate(0deg);
 }
 
 /* Enhanced Authentication Form */
