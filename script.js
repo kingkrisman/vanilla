@@ -60,7 +60,7 @@ const demoUsers = [
   },
 ];
 
-// Utility functions
+// Modern utility functions with enhanced capabilities
 function $(selector) {
   return document.querySelector(selector);
 }
@@ -69,12 +69,74 @@ function $$(selector) {
   return document.querySelectorAll(selector);
 }
 
+// Enhanced utility functions for modern interactions
+function createRippleEffect(element, event) {
+  const rect = element.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = event.clientX - rect.left - size / 2;
+  const y = event.clientY - rect.top - size / 2;
+
+  const ripple = document.createElement("div");
+  ripple.style.cssText = `
+    position: absolute;
+    width: ${size}px;
+    height: ${size}px;
+    left: ${x}px;
+    top: ${y}px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    z-index: 1000;
+  `;
+
+  element.style.position = "relative";
+  element.style.overflow = "hidden";
+  element.appendChild(ripple);
+
+  setTimeout(() => ripple.remove(), 600);
+}
+
+function addLoadingState(element, duration = 2000) {
+  const originalContent = element.innerHTML;
+  element.innerHTML = '<div class="loading-spinner"></div> Loading...';
+  element.disabled = true;
+
+  setTimeout(() => {
+    element.innerHTML = originalContent;
+    element.disabled = false;
+  }, duration);
+}
+
+function animateValue(element, start, end, duration = 1000) {
+  let startTimestamp = null;
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const current = Math.floor(progress * (end - start) + start);
+    element.textContent = current.toLocaleString();
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    }
+  };
+  window.requestAnimationFrame(step);
+}
+
 function showElement(element) {
   if (typeof element === "string") {
     element = $(element);
   }
   if (element) {
     element.style.display = "block";
+    element.style.opacity = "0";
+    element.style.transform = "translateY(10px)";
+
+    requestAnimationFrame(() => {
+      element.style.transition = "all 0.3s ease-out";
+      element.style.opacity = "1";
+      element.style.transform = "translateY(0)";
+    });
   }
 }
 
@@ -83,7 +145,13 @@ function hideElement(element) {
     element = $(element);
   }
   if (element) {
-    element.style.display = "none";
+    element.style.transition = "all 0.3s ease-out";
+    element.style.opacity = "0";
+    element.style.transform = "translateY(-10px)";
+
+    setTimeout(() => {
+      element.style.display = "none";
+    }, 300);
   }
 }
 
@@ -106,21 +174,43 @@ function hideLogin() {
 }
 
 function login(email, password) {
-  const user = demoUsers.find(
-    (u) => u.email === email && u.password === password,
-  );
+  const loginBtn = $('#loginForm button[type="submit"]');
+  addLoadingState(loginBtn, 1500);
 
-  if (user) {
-    AppState.user = user;
-    localStorage.setItem("academicHub_user", JSON.stringify(user));
-    updateUI();
-    hideLogin();
-    showNotification("Login successful!", "success");
-    return true;
-  } else {
-    showNotification("Invalid email or password", "error");
-    return false;
-  }
+  setTimeout(() => {
+    const user = demoUsers.find(
+      (u) => u.email === email && u.password === password,
+    );
+
+    if (user) {
+      AppState.user = user;
+      localStorage.setItem("academicHub_user", JSON.stringify(user));
+
+      // Add success animation
+      const modal = $("#auth-modal");
+      modal.style.animation = "modalSuccess 0.5s ease-out forwards";
+
+      setTimeout(() => {
+        updateUI();
+        hideLogin();
+        showNotification(`Welcome back, ${user.name}!`, "success");
+
+        // Animate dashboard elements on first load
+        setTimeout(() => {
+          animateDashboardStats();
+        }, 500);
+      }, 500);
+      return true;
+    } else {
+      // Add shake animation for error
+      const modal = $(".modal-content");
+      modal.style.animation = "shake 0.5s ease-in-out";
+      setTimeout(() => (modal.style.animation = ""), 500);
+
+      showNotification("Invalid email or password", "error");
+      return false;
+    }
+  }, 1000);
 }
 
 function logout() {
@@ -167,30 +257,59 @@ function togglePassword(fieldId) {
   }
 }
 
-// Navigation functions
+// Enhanced navigation with smooth transitions
 function navigateToPage(page) {
-  // Hide all pages
-  $$(".page").forEach((p) => p.classList.remove("active"));
+  // Add loading animation
+  const loader = document.createElement("div");
+  loader.className = "page-loader";
+  loader.innerHTML = '<div class="loading-spinner"></div>';
+  loader.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000;
+    color: var(--primary-500);
+  `;
+  document.body.appendChild(loader);
 
-  // Show selected page
-  const targetPage = $("#" + page + "-page");
-  if (targetPage) {
-    targetPage.classList.add("active");
-    AppState.currentPage = page;
+  // Hide current page with animation
+  const currentPage = $(".page.active");
+  if (currentPage) {
+    currentPage.style.animation = "pageSlideOut 0.3s ease-in forwards";
   }
 
-  // Update navigation
-  $$(".nav-link").forEach((link) => {
-    link.classList.remove("active");
-    if (link.dataset.page === page) {
-      link.classList.add("active");
+  setTimeout(() => {
+    // Hide all pages
+    $$(".page").forEach((p) => {
+      p.classList.remove("active");
+      p.style.animation = "";
+    });
+
+    // Show selected page
+    const targetPage = $("#" + page + "-page");
+    if (targetPage) {
+      targetPage.classList.add("active");
+      targetPage.style.animation = "pageSlideIn 0.3s ease-out forwards";
+      AppState.currentPage = page;
     }
-  });
 
-  // Load page-specific content
-  if (page === "resources") {
-    renderResources();
-  }
+    // Update navigation with ripple effect
+    $$(".nav-link").forEach((link) => {
+      link.classList.remove("active");
+      if (link.dataset.page === page) {
+        link.classList.add("active");
+      }
+    });
+
+    // Load page-specific content
+    if (page === "resources") {
+      setTimeout(() => renderResources(), 100);
+    }
+
+    // Remove loader
+    loader.remove();
+  }, 150);
 }
 
 // UI Update functions
@@ -280,9 +399,32 @@ function createResourceCard(resource) {
 function downloadResource(id) {
   const resource = AppState.resources.find((r) => r.id === id);
   if (resource) {
-    resource.downloads++;
-    showNotification(`Downloading "${resource.title}"...`, "success");
-    // In a real app, this would trigger an actual download
+    const downloadBtn = event.target;
+    const originalText = downloadBtn.textContent;
+
+    // Add download animation
+    downloadBtn.style.background = "var(--accent-success)";
+    downloadBtn.innerHTML =
+      '<div class="loading-spinner"></div> Downloading...';
+    downloadBtn.disabled = true;
+
+    setTimeout(() => {
+      resource.downloads++;
+      downloadBtn.innerHTML = "✓ Downloaded";
+      downloadBtn.style.background = "var(--accent-success)";
+
+      setTimeout(() => {
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.style.background = "";
+        downloadBtn.disabled = false;
+      }, 2000);
+
+      showNotification(
+        `"${resource.title}" downloaded successfully!`,
+        "success",
+      );
+      renderResources(); // Refresh to show updated download count
+    }, 1500);
   }
 }
 
