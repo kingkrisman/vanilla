@@ -2,6 +2,8 @@
 const AppState = {
   user: null,
   currentPage: "dashboard",
+  theme: localStorage.getItem("academicHub_theme") || "dark",
+  currentAuthTab: "login",
   resources: [
     {
       id: 1,
@@ -60,7 +62,7 @@ const demoUsers = [
   },
 ];
 
-// Utility functions
+// Modern utility functions with enhanced capabilities
 function $(selector) {
   return document.querySelector(selector);
 }
@@ -69,12 +71,74 @@ function $$(selector) {
   return document.querySelectorAll(selector);
 }
 
+// Enhanced utility functions for modern interactions
+function createRippleEffect(element, event) {
+  const rect = element.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = event.clientX - rect.left - size / 2;
+  const y = event.clientY - rect.top - size / 2;
+
+  const ripple = document.createElement("div");
+  ripple.style.cssText = `
+    position: absolute;
+    width: ${size}px;
+    height: ${size}px;
+    left: ${x}px;
+    top: ${y}px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    z-index: 1000;
+  `;
+
+  element.style.position = "relative";
+  element.style.overflow = "hidden";
+  element.appendChild(ripple);
+
+  setTimeout(() => ripple.remove(), 600);
+}
+
+function addLoadingState(element, duration = 2000) {
+  const originalContent = element.innerHTML;
+  element.innerHTML = '<div class="loading-spinner"></div> Loading...';
+  element.disabled = true;
+
+  setTimeout(() => {
+    element.innerHTML = originalContent;
+    element.disabled = false;
+  }, duration);
+}
+
+function animateValue(element, start, end, duration = 1000) {
+  let startTimestamp = null;
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const current = Math.floor(progress * (end - start) + start);
+    element.textContent = current.toLocaleString();
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    }
+  };
+  window.requestAnimationFrame(step);
+}
+
 function showElement(element) {
   if (typeof element === "string") {
     element = $(element);
   }
   if (element) {
     element.style.display = "block";
+    element.style.opacity = "0";
+    element.style.transform = "translateY(10px)";
+
+    requestAnimationFrame(() => {
+      element.style.transition = "all 0.3s ease-out";
+      element.style.opacity = "1";
+      element.style.transform = "translateY(0)";
+    });
   }
 }
 
@@ -83,7 +147,13 @@ function hideElement(element) {
     element = $(element);
   }
   if (element) {
-    element.style.display = "none";
+    element.style.transition = "all 0.3s ease-out";
+    element.style.opacity = "0";
+    element.style.transform = "translateY(-10px)";
+
+    setTimeout(() => {
+      element.style.display = "none";
+    }, 300);
   }
 }
 
@@ -106,21 +176,68 @@ function hideLogin() {
 }
 
 function login(email, password) {
-  const user = demoUsers.find(
-    (u) => u.email === email && u.password === password,
-  );
+  const loginBtn = $(".auth-submit .btn-text");
+  const loader = $(".auth-submit .btn-loader");
+  const submitBtn = $(".auth-submit");
 
-  if (user) {
-    AppState.user = user;
-    localStorage.setItem("academicHub_user", JSON.stringify(user));
-    updateUI();
-    hideLogin();
-    showNotification("Login successful!", "success");
-    return true;
-  } else {
-    showNotification("Invalid email or password", "error");
-    return false;
-  }
+  // Show loading state
+  loginBtn.style.opacity = "0";
+  loader.style.display = "block";
+  submitBtn.disabled = true;
+
+  setTimeout(() => {
+    const user = demoUsers.find(
+      (u) => u.email === email && u.password === password,
+    );
+
+    if (user) {
+      AppState.user = user;
+      localStorage.setItem("academicHub_user", JSON.stringify(user));
+
+      // Success feedback
+      loginBtn.textContent = "Success!";
+      loginBtn.style.opacity = "1";
+      loader.style.display = "none";
+      submitBtn.style.background = "var(--accent-success)";
+
+      setTimeout(() => {
+        updateUI();
+        hideLogin();
+        showNotification(`Welcome back, ${user.name}!`, "success");
+
+        // Reset button
+        loginBtn.textContent = "Sign In";
+        submitBtn.style.background = "";
+        submitBtn.disabled = false;
+
+        // Animate dashboard elements on first load
+        setTimeout(() => {
+          animateDashboardStats();
+        }, 500);
+      }, 1000);
+      return true;
+    } else {
+      // Error feedback
+      loginBtn.textContent = "Invalid credentials";
+      loginBtn.style.opacity = "1";
+      loader.style.display = "none";
+      submitBtn.style.background = "var(--accent-secondary)";
+
+      // Add shake animation for error
+      const modal = $(".modal-content");
+      modal.style.animation = "shake 0.5s ease-in-out";
+      setTimeout(() => (modal.style.animation = ""), 500);
+
+      setTimeout(() => {
+        loginBtn.textContent = "Sign In";
+        submitBtn.style.background = "";
+        submitBtn.disabled = false;
+      }, 2000);
+
+      showNotification("Invalid email or password", "error");
+      return false;
+    }
+  }, 1500);
 }
 
 function logout() {
@@ -142,8 +259,8 @@ function switchRole() {
 }
 
 function fillDemoCredentials(role) {
-  const emailInput = $("#email");
-  const passwordInput = $("#password");
+  const emailInput = $("#login-email");
+  const passwordInput = $("#login-password");
 
   if (role === "student") {
     emailInput.value = "student@demo.com";
@@ -152,46 +269,427 @@ function fillDemoCredentials(role) {
     emailInput.value = "lecturer@demo.com";
     passwordInput.value = "lecturer123";
   }
+
+  // Add visual feedback
+  [emailInput, passwordInput].forEach((input) => {
+    input.style.borderColor = "var(--accent-success)";
+    setTimeout(() => {
+      input.style.borderColor = "";
+    }, 2000);
+  });
 }
 
 function togglePassword(fieldId) {
   const field = $("#" + fieldId);
   const button = field.nextElementSibling;
+  const eyeOpen = button.querySelector(".eye-open");
+  const eyeClosed = button.querySelector(".eye-closed");
 
   if (field.type === "password") {
     field.type = "text";
-    button.textContent = "🙈";
+    eyeOpen.style.display = "none";
+    eyeClosed.style.display = "block";
   } else {
     field.type = "password";
-    button.textContent = "👁️";
+    eyeOpen.style.display = "block";
+    eyeClosed.style.display = "none";
   }
+
+  // Add animation
+  button.style.transform = "scale(0.9)";
+  setTimeout(() => {
+    button.style.transform = "";
+  }, 150);
 }
 
-// Navigation functions
+// Enhanced navigation with smooth transitions
 function navigateToPage(page) {
-  // Hide all pages
-  $$(".page").forEach((p) => p.classList.remove("active"));
+  // Add loading animation
+  const loader = document.createElement("div");
+  loader.className = "page-loader";
+  loader.innerHTML = '<div class="loading-spinner"></div>';
+  loader.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000;
+    color: var(--primary-500);
+  `;
+  document.body.appendChild(loader);
 
-  // Show selected page
-  const targetPage = $("#" + page + "-page");
-  if (targetPage) {
-    targetPage.classList.add("active");
-    AppState.currentPage = page;
+  // Hide current page with animation
+  const currentPage = $(".page.active");
+  if (currentPage) {
+    currentPage.style.animation = "pageSlideOut 0.3s ease-in forwards";
   }
 
-  // Update navigation
-  $$(".nav-link").forEach((link) => {
-    link.classList.remove("active");
-    if (link.dataset.page === page) {
-      link.classList.add("active");
+  setTimeout(() => {
+    // Hide all pages
+    $$(".page").forEach((p) => {
+      p.classList.remove("active");
+      p.style.animation = "";
+    });
+
+    // Show selected page
+    const targetPage = $("#" + page + "-page");
+    if (targetPage) {
+      targetPage.classList.add("active");
+      targetPage.style.animation = "pageSlideIn 0.3s ease-out forwards";
+      AppState.currentPage = page;
     }
-  });
 
-  // Load page-specific content
-  if (page === "resources") {
-    renderResources();
-  }
+    // Update navigation with ripple effect
+    $$(".nav-link").forEach((link) => {
+      link.classList.remove("active");
+      if (link.dataset.page === page) {
+        link.classList.add("active");
+      }
+    });
+
+    // Load page-specific content
+    if (page === "resources") {
+      setTimeout(() => renderResources(), 100);
+    }
+
+    // Remove loader
+    loader.remove();
+  }, 150);
 }
+
+// Enhanced dashboard data for students
+const StudentData = {
+  profile: {
+    name: "John Doe",
+    studentId: "STU2024001",
+    major: "Computer Science",
+    year: "Junior",
+    gpa: 3.7,
+    creditsCompleted: 85,
+    creditsRequired: 120,
+    avatar: "JD",
+  },
+  stats: {
+    enrolledCourses: 6,
+    completedAssignments: 42,
+    pendingAssignments: 8,
+    overallProgress: 78,
+    studyStreak: 12,
+    totalStudyHours: 145,
+    averageGrade: "A-",
+    upcomingExams: 3,
+  },
+  courses: [
+    {
+      id: 1,
+      code: "CS301",
+      name: "Data Structures & Algorithms",
+      instructor: "Dr. Smith",
+      progress: 85,
+      grade: "A",
+      credits: 3,
+      schedule: "MWF 10:00-11:00",
+      nextClass: "2024-01-20 10:00",
+      assignments: 3,
+      color: "#3b82f6",
+    },
+    {
+      id: 2,
+      code: "CS305",
+      name: "Database Systems",
+      instructor: "Prof. Johnson",
+      progress: 72,
+      grade: "B+",
+      credits: 3,
+      schedule: "TTh 14:00-15:30",
+      nextClass: "2024-01-21 14:00",
+      assignments: 2,
+      color: "#10b981",
+    },
+    {
+      id: 3,
+      code: "CS350",
+      name: "Software Engineering",
+      instructor: "Dr. Wilson",
+      progress: 90,
+      grade: "A",
+      credits: 4,
+      schedule: "MW 16:00-17:30",
+      nextClass: "2024-01-22 16:00",
+      assignments: 1,
+      color: "#8b5cf6",
+    },
+    {
+      id: 4,
+      code: "MATH320",
+      name: "Discrete Mathematics",
+      instructor: "Prof. Davis",
+      progress: 65,
+      grade: "B",
+      credits: 3,
+      schedule: "TTh 12:00-13:30",
+      nextClass: "2024-01-21 12:00",
+      assignments: 4,
+      color: "#f59e0b",
+    },
+  ],
+  assignments: [
+    {
+      id: 1,
+      title: "Binary Tree Implementation",
+      course: "CS301",
+      dueDate: "2024-01-25",
+      priority: "high",
+      status: "in-progress",
+      progress: 60,
+      type: "Programming",
+    },
+    {
+      id: 2,
+      title: "Database Design Project",
+      course: "CS305",
+      dueDate: "2024-01-28",
+      priority: "medium",
+      status: "not-started",
+      progress: 0,
+      type: "Project",
+    },
+    {
+      id: 3,
+      title: "Software Requirements Analysis",
+      course: "CS350",
+      dueDate: "2024-01-30",
+      priority: "medium",
+      status: "planning",
+      progress: 20,
+      type: "Report",
+    },
+    {
+      id: 4,
+      title: "Graph Theory Problem Set",
+      course: "MATH320",
+      dueDate: "2024-01-24",
+      priority: "high",
+      status: "not-started",
+      progress: 0,
+      type: "Homework",
+    },
+  ],
+  schedule: [
+    {
+      time: "09:00",
+      title: "Study Session - Algorithms",
+      type: "study",
+      duration: 60,
+    },
+    {
+      time: "10:00",
+      title: "CS301 - Data Structures",
+      type: "class",
+      duration: 60,
+    },
+    {
+      time: "14:00",
+      title: "CS305 - Database Systems",
+      type: "class",
+      duration: 90,
+    },
+    {
+      time: "16:00",
+      title: "Study Group - Software Engineering",
+      type: "group",
+      duration: 120,
+    },
+  ],
+  achievements: [
+    {
+      id: 1,
+      title: "Perfect Attendance",
+      description: "Attended all classes this month",
+      icon: "🎯",
+      earned: true,
+      date: "2024-01-15",
+    },
+    {
+      id: 2,
+      title: "Study Streak Master",
+      description: "10+ days of consistent studying",
+      icon: "🔥",
+      earned: true,
+      date: "2024-01-18",
+    },
+    {
+      id: 3,
+      title: "Assignment Ace",
+      description: "Submitted 5 assignments early",
+      icon: "⚡",
+      earned: false,
+      progress: 80,
+    },
+  ],
+  recentActivity: [
+    {
+      type: "assignment",
+      icon: "📝",
+      title: "Binary Tree Implementation",
+      description: "Started working on assignment",
+      time: "2 hours ago",
+      isNew: true,
+    },
+    {
+      type: "grade",
+      icon: "🎉",
+      title: "Database Quiz Results",
+      description: "Received grade: A- (92%)",
+      time: "1 day ago",
+      isNew: false,
+    },
+    {
+      type: "resource",
+      icon: "📚",
+      title: "Algorithm Visualization Guide",
+      description: "Downloaded new study material",
+      time: "2 days ago",
+      isNew: false,
+    },
+    {
+      type: "message",
+      icon: "💬",
+      title: "Dr. Smith",
+      description: "Office hours reminder for tomorrow",
+      time: "3 days ago",
+      isNew: false,
+    },
+  ],
+  studyPlan: [
+    {
+      subject: "Data Structures",
+      timeAllocated: 120,
+      timeSpent: 85,
+      efficiency: 92,
+    },
+    {
+      subject: "Database Systems",
+      timeAllocated: 90,
+      timeSpent: 75,
+      efficiency: 88,
+    },
+    {
+      subject: "Software Engineering",
+      timeAllocated: 100,
+      timeSpent: 95,
+      efficiency: 95,
+    },
+  ],
+};
+
+// Enhanced dashboard data for lecturers
+const LecturerData = {
+  stats: {
+    totalResources: 42,
+    activeStudents: 156,
+    weeklyViews: 2847,
+    averageRating: 4.8,
+    coursesManaged: 8,
+    pendingAssignments: 23,
+    totalDownloads: 3421,
+    studentEngagement: 92,
+  },
+  recentActivities: [
+    {
+      type: "upload",
+      icon: "📄",
+      title: "Advanced React Patterns",
+      description: "New resource uploaded",
+      time: "2 hours ago",
+      isNew: true,
+    },
+    {
+      type: "student",
+      icon: "👤",
+      title: "Sarah Wilson",
+      description: "Downloaded JavaScript Fundamentals",
+      time: "4 hours ago",
+      isNew: false,
+    },
+    {
+      type: "comment",
+      icon: "💬",
+      title: "CSS Grid Layout",
+      description: "New question posted",
+      time: "6 hours ago",
+      isNew: true,
+    },
+    {
+      type: "rating",
+      icon: "⭐",
+      title: "Python Basics",
+      description: "Received 5-star rating",
+      time: "1 day ago",
+      isNew: false,
+    },
+    {
+      type: "assignment",
+      icon: "📝",
+      title: "Web Development Assignment",
+      description: "Due in 2 days (5 submissions pending)",
+      time: "2 days ago",
+      isNew: false,
+    },
+  ],
+  courses: [
+    {
+      id: 1,
+      name: "Web Development Fundamentals",
+      students: 45,
+      progress: 78,
+      status: "active",
+      nextClass: "2024-01-20 14:00",
+    },
+    {
+      id: 2,
+      name: "Advanced JavaScript",
+      students: 32,
+      progress: 65,
+      status: "active",
+      nextClass: "2024-01-22 10:00",
+    },
+    {
+      id: 3,
+      name: "React Development",
+      students: 28,
+      progress: 45,
+      status: "active",
+      nextClass: "2024-01-21 16:00",
+    },
+  ],
+  topStudents: [
+    {
+      name: "Sarah Wilson",
+      score: 98,
+      course: "Web Dev Fundamentals",
+      avatar: "SW",
+    },
+    {
+      name: "Mike Chen",
+      score: 95,
+      course: "Advanced JavaScript",
+      avatar: "MC",
+    },
+    {
+      name: "Emma Davis",
+      score: 94,
+      course: "React Development",
+      avatar: "ED",
+    },
+    {
+      name: "John Smith",
+      score: 92,
+      course: "Web Dev Fundamentals",
+      avatar: "JS",
+    },
+  ],
+};
 
 // UI Update functions
 function updateUI() {
@@ -214,24 +712,858 @@ function updateUI() {
     // Show/hide role-specific elements
     if (user.role === "lecturer") {
       showElement("#upload-nav");
-      showElement("#upload-btn");
       $("#role-switch").textContent = "Switch to Student";
       $("#user-badge").className = "badge";
     } else {
       hideElement("#upload-nav");
-      hideElement("#upload-btn");
       $("#role-switch").textContent = "Switch to Lecturer";
       $("#user-badge").className = "badge";
       $("#user-badge").style.background = "rgba(158, 163, 174, 0.2)";
       $("#user-badge").style.color = "#fafafa";
     }
+
+    // Update dashboard content based on role
+    updateDashboardContent();
   } else {
     // Show unauthenticated UI
     showElement("#auth-buttons");
     hideElement("#user-menu");
     hideElement("#main-nav");
     hideElement("#user-badge");
+
+    // Show default dashboard
+    updateDashboardContent();
   }
+}
+
+// Dashboard content management
+function updateDashboardContent() {
+  const user = AppState.user;
+  const dashboardContent = $("#dashboard-content");
+
+  if (!dashboardContent) return;
+
+  if (user && user.role === "lecturer") {
+    dashboardContent.innerHTML = createLecturerDashboard();
+    // Initialize lecturer-specific features
+    setTimeout(() => {
+      initializeLecturerDashboard();
+    }, 100);
+  } else if (user && user.role === "student") {
+    dashboardContent.innerHTML = createStudentDashboard();
+    // Initialize student-specific features
+    setTimeout(() => {
+      initializeStudentDashboard();
+    }, 100);
+  } else {
+    dashboardContent.innerHTML = createGuestDashboard();
+  }
+}
+
+// Create lecturer dashboard HTML
+function createLecturerDashboard() {
+  return `
+    <div class="lecturer-dashboard">
+                  <!-- Redesigned Lecturer Header -->
+      <div class="lecturer-header-container">
+        <!-- Main Header Section -->
+        <div class="lecturer-header-main">
+          <div class="header-branding">
+            <div class="welcome-section">
+              <h1>Welcome back, Dr. Smith</h1>
+              <p>Ready to inspire minds today?</p>
+            </div>
+            <div class="quick-stats-inline">
+              <div class="inline-stat">
+                <span class="stat-number">${LecturerData.stats.coursesManaged}</span>
+                <span class="stat-label">Courses</span>
+              </div>
+              <div class="inline-stat">
+                <span class="stat-number">${LecturerData.stats.activeStudents}</span>
+                <span class="stat-label">Students</span>
+              </div>
+              <div class="inline-stat">
+                <span class="stat-number">${LecturerData.stats.pendingAssignments}</span>
+                <span class="stat-label">Pending</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="header-actions-redesigned">
+            <button class="action-btn-primary" onclick="navigateToPage('upload')">
+              <div class="btn-icon-wrapper">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" x2="12" y1="3" y2="15"></line>
+                </svg>
+              </div>
+              <div class="btn-content">
+                <span class="btn-title">Upload Resource</span>
+                <span class="btn-subtitle">Share new content</span>
+              </div>
+            </button>
+
+            <div class="secondary-actions">
+              <button class="action-btn-secondary" onclick="createNewCourse()" title="Create New Course">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>New Course</span>
+              </button>
+              <button class="action-btn-secondary" onclick="createAnnouncement()" title="Create Announcement">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                </svg>
+                <span>Announce</span>
+              </button>
+              <button class="action-btn-secondary" onclick="gradeAssignments()" title="Grade Assignments">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11l3 3L22 4"></path>
+                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                </svg>
+                <span>Grade</span>
+                ${LecturerData.stats.pendingAssignments > 0 ? `<span class="notification-badge">${LecturerData.stats.pendingAssignments}</span>` : ""}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Navigation Bar -->
+        <div class="lecturer-nav-bar">
+          <div class="nav-section">
+            <span class="nav-label">Quick Access:</span>
+            <div class="nav-links">
+              <a href="#" class="nav-link active" onclick="showCourseOverview()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 7l10-4 10 4v10l-10 4-10-4V7z"></path>
+                  <path d="M12 22V12"></path>
+                  <path d="M22 7l-10 5L2 7"></path>
+                </svg>
+                Courses
+              </a>
+              <a href="#" class="nav-link" onclick="viewAllStudents()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 010 7.75"></path>
+                </svg>
+                Students
+              </a>
+              <a href="#" class="nav-link" onclick="navigateToPage('resources')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                Resources
+              </a>
+              <a href="#" class="nav-link" onclick="viewReports()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Analytics
+              </a>
+            </div>
+          </div>
+
+          <div class="nav-status">
+            <div class="status-indicator">
+              <div class="status-dot online"></div>
+              <span>Online</span>
+            </div>
+            <div class="last-active">
+              <span>Last active: Just now</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lecturer Stats Grid -->
+      <div class="lecturer-stats-grid">
+        <div class="stat-card primary" data-metric="resources">
+          <div class="stat-icon">📚</div>
+          <div class="stat-content">
+            <h3>Total Resources</h3>
+            <p class="stat-number">${LecturerData.stats.totalResources}</p>
+            <span class="stat-trend positive">+15% this month</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[20,25,30,35,42]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card secondary" data-metric="students">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <h3>Active Students</h3>
+            <p class="stat-number">${LecturerData.stats.activeStudents}</p>
+            <span class="stat-trend positive">+8% this month</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[140,145,150,155,156]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card accent" data-metric="engagement">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <h3>Student Engagement</h3>
+            <p class="stat-number">${LecturerData.stats.studentEngagement}%</p>
+            <span class="stat-trend positive">+5% this week</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[85,88,90,91,92]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card warning" data-metric="assignments">
+          <div class="stat-icon">📝</div>
+          <div class="stat-content">
+            <h3>Pending Reviews</h3>
+            <p class="stat-number">${LecturerData.stats.pendingAssignments}</p>
+            <span class="stat-trend neutral">Needs attention</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[30,28,25,24,23]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card success" data-metric="rating">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h3>Average Rating</h3>
+            <p class="stat-number">${LecturerData.stats.averageRating}</p>
+            <span class="stat-trend positive">Excellent feedback</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[4.5,4.6,4.7,4.7,4.8]"></div>
+          </div>
+        </div>
+
+        <div class="stat-card info" data-metric="courses">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-content">
+            <h3>Active Courses</h3>
+            <p class="stat-number">${LecturerData.stats.coursesManaged}</p>
+            <span class="stat-trend neutral">3 starting soon</span>
+          </div>
+          <div class="stat-chart">
+            <div class="mini-chart" data-values="[6,7,7,8,8]"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Grid -->
+      <div class="lecturer-main-grid">
+        <!-- Courses Overview -->
+        <div class="card courses-overview">
+          <div class="card-header">
+            <h3>My Courses</h3>
+            <div class="header-actions">
+              <button class="btn-icon" onclick="refreshCourses()" title="Refresh">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                </svg>
+              </button>
+              <button class="btn-small" onclick="manageAllCourses()">Manage All</button>
+            </div>
+          </div>
+          <div class="courses-list">
+            ${LecturerData.courses
+              .map(
+                (course) => `
+              <div class="course-item" data-course-id="${course.id}">
+                <div class="course-info">
+                  <h4>${course.name}</h4>
+                  <div class="course-meta">
+                    <span class="student-count">${course.students} students</span>
+                    <span class="next-class">Next: ${new Date(course.nextClass).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div class="course-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${course.progress}%"></div>
+                  </div>
+                  <span class="progress-text">${course.progress}% complete</span>
+                </div>
+                <div class="course-actions">
+                  <button class="btn-icon" onclick="viewCourse(${course.id})" title="View Course">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                  <button class="btn-icon" onclick="editCourse(${course.id})" title="Edit Course">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card activity-card">
+          <div class="card-header">
+            <h3>Recent Activity</h3>
+            <span class="activity-badge live">Live</span>
+          </div>
+          <div class="activity-list">
+            ${LecturerData.recentActivities
+              .map(
+                (activity) => `
+              <div class="activity-item ${activity.isNew ? "new" : ""}">
+                <div class="activity-icon ${activity.type}">${activity.icon}</div>
+                <div class="activity-content">
+                  <p><strong>${activity.title}</strong> ${activity.description}</p>
+                  <small>${activity.time}</small>
+                </div>
+                <div class="activity-status ${activity.isNew ? "new" : ""}"></div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllActivity()">View all activity</button>
+          </div>
+        </div>
+
+        <!-- Top Students -->
+        <div class="card students-card">
+          <div class="card-header">
+            <h3>Top Performing Students</h3>
+            <button class="btn-small" onclick="viewAllStudents()">View All</button>
+          </div>
+          <div class="students-list">
+            ${LecturerData.topStudents
+              .map(
+                (student, index) => `
+              <div class="student-item">
+                <div class="student-rank">#${index + 1}</div>
+                <div class="student-avatar">${student.avatar}</div>
+                <div class="student-info">
+                  <h4>${student.name}</h4>
+                  <small>${student.course}</small>
+                </div>
+                <div class="student-score">
+                  <span class="score">${student.score}%</span>
+                  <div class="score-bar">
+                    <div class="score-fill" style="width: ${student.score}%"></div>
+                  </div>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <!-- Analytics Overview -->
+        <div class="card analytics-card">
+          <div class="card-header">
+            <h3>Analytics Overview</h3>
+            <div class="analytics-tabs">
+              <button class="tab-btn active" data-tab="weekly">Week</button>
+              <button class="tab-btn" data-tab="monthly">Month</button>
+              <button class="tab-btn" data-tab="yearly">Year</button>
+            </div>
+          </div>
+          <div class="analytics-content">
+            <div class="analytics-chart">
+              <canvas id="engagement-chart" width="300" height="150"></canvas>
+            </div>
+            <div class="analytics-summary">
+              <div class="summary-item">
+                <span class="label">Total Views</span>
+                <span class="value">${LecturerData.stats.weeklyViews.toLocaleString()}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Downloads</span>
+                <span class="value">${LecturerData.stats.totalDownloads.toLocaleString()}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Engagement Rate</span>
+                <span class="value">${LecturerData.stats.studentEngagement}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card quick-actions-card enhanced">
+          <div class="card-header">
+            <h3>Quick Actions</h3>
+            <span class="actions-count">${6} available</span>
+          </div>
+          <div class="quick-actions grid">
+            <button class="action-btn primary" onclick="navigateToPage('upload')">
+              <span>📤</span>
+              <div class="action-text">
+                <strong>Upload Resource</strong>
+                <small>Share new content</small>
+              </div>
+            </button>
+            <button class="action-btn secondary" onclick="createNewCourse()">
+              <span>🎓</span>
+              <div class="action-text">
+                <strong>Create Course</strong>
+                <small>Start a new class</small>
+              </div>
+            </button>
+            <button class="action-btn accent" onclick="gradeAssignments()">
+              <span>📝</span>
+              <div class="action-text">
+                <strong>Grade Work</strong>
+                <small>${LecturerData.stats.pendingAssignments} pending</small>
+              </div>
+            </button>
+            <button class="action-btn info" onclick="messageStudents()">
+              <span>💬</span>
+              <div class="action-text">
+                <strong>Message Students</strong>
+                <small>Send announcements</small>
+              </div>
+            </button>
+            <button class="action-btn warning" onclick="scheduleClass()">
+              <span>📅</span>
+              <div class="action-text">
+                <strong>Schedule Class</strong>
+                <small>Book meeting time</small>
+              </div>
+            </button>
+            <button class="action-btn success" onclick="viewReports()">
+              <span>📊</span>
+              <div class="action-text">
+                <strong>View Reports</strong>
+                <small>Detailed analytics</small>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Create comprehensive student dashboard
+function createStudentDashboard() {
+  return `
+    <div class="student-dashboard">
+      <!-- Student Header with Profile -->
+      <div class="student-header">
+        <div class="student-profile">
+          <div class="profile-avatar">
+            <span>${StudentData.profile.avatar}</span>
+            <div class="status-indicator online"></div>
+          </div>
+          <div class="profile-info">
+            <h1>Welcome back, ${StudentData.profile.name}!</h1>
+            <div class="profile-details">
+              <span class="student-id">${StudentData.profile.studentId}</span>
+              <span class="major">${StudentData.profile.major} • ${StudentData.profile.year}</span>
+              <span class="gpa">GPA: ${StudentData.profile.gpa}</span>
+            </div>
+            <div class="progress-summary">
+              <div class="credit-progress">
+                <span>Academic Progress</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${(StudentData.profile.creditsCompleted / StudentData.profile.creditsRequired) * 100}%"></div>
+                </div>
+                <small>${StudentData.profile.creditsCompleted}/${StudentData.profile.creditsRequired} credits</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="streak-badge">
+            <span class="streak-icon">🔥</span>
+            <div class="streak-info">
+              <span class="streak-number">${StudentData.stats.studyStreak}</span>
+              <span class="streak-label">Day Streak</span>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="startStudySession()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Start Studying
+          </button>
+        </div>
+      </div>
+
+      <!-- Enhanced Stats Grid -->
+      <div class="student-stats-grid">
+        <div class="stat-card primary" data-metric="courses">
+          <div class="stat-icon">📚</div>
+          <div class="stat-content">
+            <h3>Enrolled Courses</h3>
+            <p class="stat-number">${StudentData.stats.enrolledCourses}</p>
+            <span class="stat-trend positive">${StudentData.courses.filter((c) => c.progress > 90).length} nearly complete</span>
+          </div>
+          <div class="stat-action">
+            <button class="btn-small" onclick="viewAllCourses()">View All</button>
+          </div>
+        </div>
+
+        <div class="stat-card warning" data-metric="assignments">
+          <div class="stat-icon">📝</div>
+          <div class="stat-content">
+            <h3>Pending Assignments</h3>
+            <p class="stat-number">${StudentData.stats.pendingAssignments}</p>
+            <span class="stat-trend attention">${StudentData.assignments.filter((a) => a.priority === "high").length} high priority</span>
+          </div>
+          <div class="stat-action">
+            <button class="btn-small" onclick="viewAssignments()">Manage</button>
+          </div>
+        </div>
+
+        <div class="stat-card success" data-metric="progress">
+          <div class="stat-icon">📈</div>
+          <div class="stat-content">
+            <h3>Overall Progress</h3>
+            <p class="stat-number">${StudentData.stats.overallProgress}%</p>
+            <span class="stat-trend positive">Above average</span>
+          </div>
+          <div class="stat-action">
+            <button class="btn-small" onclick="viewAnalytics()">Details</button>
+          </div>
+        </div>
+
+        <div class="stat-card info" data-metric="grade">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h3>Average Grade</h3>
+            <p class="stat-number">${StudentData.stats.averageGrade}</p>
+            <span class="stat-trend positive">Excellent work!</span>
+          </div>
+          <div class="stat-action">
+            <button class="btn-small" onclick="viewGrades()">Grades</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Student Dashboard Grid -->
+      <div class="student-main-grid">
+        <!-- Today's Schedule -->
+        <div class="card schedule-card">
+          <div class="card-header">
+            <h3>Today's Schedule</h3>
+            <div class="schedule-date">
+              <span>${new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span>
+            </div>
+          </div>
+          <div class="schedule-list">
+            ${StudentData.schedule
+              .map(
+                (item) => `
+              <div class="schedule-item ${item.type}">
+                <div class="schedule-time">${item.time}</div>
+                <div class="schedule-content">
+                  <h4>${item.title}</h4>
+                  <span class="schedule-duration">${item.duration} min</span>
+                </div>
+                <div class="schedule-type ${item.type}">${item.type.charAt(0).toUpperCase()}</div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewFullSchedule()">View full schedule</button>
+          </div>
+        </div>
+
+        <!-- Assignments Dashboard -->
+        <div class="card assignments-card">
+          <div class="card-header">
+            <h3>Upcoming Assignments</h3>
+            <button class="btn-icon" onclick="addNewAssignment()" title="Add Assignment">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="assignments-list">
+            ${StudentData.assignments
+              .slice(0, 4)
+              .map(
+                (assignment) => `
+              <div class="assignment-item ${assignment.priority}" data-assignment-id="${assignment.id}">
+                <div class="assignment-info">
+                  <div class="assignment-header">
+                    <h4>${assignment.title}</h4>
+                    <span class="assignment-course">${assignment.course}</span>
+                  </div>
+                  <div class="assignment-meta">
+                    <span class="assignment-type">${assignment.type}</span>
+                    <span class="assignment-due">Due: ${new Date(assignment.dueDate).toLocaleDateString()}</span>
+                  </div>
+                  <div class="assignment-progress">
+                    <div class="progress-bar small">
+                      <div class="progress-fill" style="width: ${assignment.progress}%"></div>
+                    </div>
+                    <span class="progress-text">${assignment.progress}%</span>
+                  </div>
+                </div>
+                <div class="assignment-actions">
+                  <button class="btn-icon" onclick="editAssignment(${assignment.id})" title="Edit">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <div class="priority-indicator ${assignment.priority}"></div>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllAssignments()">View all assignments</button>
+          </div>
+        </div>
+
+        <!-- Course Progress -->
+        <div class="card courses-card">
+          <div class="card-header">
+            <h3>Course Progress</h3>
+            <button class="btn-small" onclick="enrollInCourse()">Enroll</button>
+          </div>
+          <div class="courses-list">
+            ${StudentData.courses
+              .slice(0, 3)
+              .map(
+                (course) => `
+              <div class="course-item" style="border-left: 4px solid ${course.color}">
+                <div class="course-info">
+                  <div class="course-header">
+                    <h4>${course.code}</h4>
+                    <span class="course-grade grade-${course.grade.replace("+", "plus").replace("-", "minus")}">${course.grade}</span>
+                  </div>
+                  <p class="course-name">${course.name}</p>
+                  <small class="course-instructor">${course.instructor}</small>
+                  <div class="course-schedule">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    ${course.schedule}
+                  </div>
+                </div>
+                <div class="course-progress">
+                  <div class="progress-circle" data-progress="${course.progress}">
+                    <svg viewBox="0 0 36 36">
+                      <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path class="circle" stroke-dasharray="${course.progress}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="percentage">${course.progress}%</div>
+                  </div>
+                  <div class="course-stats">
+                    <small>${course.assignments} assignments</small>
+                    <small>${course.credits} credits</small>
+                  </div>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllCourses()">View all courses</button>
+          </div>
+        </div>
+
+        <!-- Study Analytics -->
+        <div class="card analytics-card">
+          <div class="card-header">
+            <h3>Study Analytics</h3>
+            <div class="analytics-period">
+              <select id="analytics-period" onchange="updateStudyAnalytics(this.value)">
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="semester">This Semester</option>
+              </select>
+            </div>
+          </div>
+          <div class="analytics-content">
+            <div class="study-summary">
+              <div class="summary-stat">
+                <span class="stat-value">${StudentData.stats.totalStudyHours}h</span>
+                <span class="stat-label">Total Study Time</span>
+              </div>
+              <div class="summary-stat">
+                <span class="stat-value">${Math.round(StudentData.stats.totalStudyHours / 7)}h</span>
+                <span class="stat-label">Daily Average</span>
+              </div>
+              <div class="summary-stat">
+                <span class="stat-value">${StudentData.stats.studyStreak}</span>
+                <span class="stat-label">Day Streak</span>
+              </div>
+            </div>
+            <div class="study-chart">
+              <canvas id="study-chart" width="280" height="120"></canvas>
+            </div>
+            <div class="study-subjects">
+              ${StudentData.studyPlan
+                .map(
+                  (subject) => `
+                <div class="subject-time">
+                  <div class="subject-info">
+                    <span class="subject-name">${subject.subject}</span>
+                    <span class="time-ratio">${subject.timeSpent}/${subject.timeAllocated}min</span>
+                  </div>
+                  <div class="efficiency-bar">
+                    <div class="efficiency-fill" style="width: ${subject.efficiency}%"></div>
+                  </div>
+                  <span class="efficiency-score">${subject.efficiency}%</span>
+                </div>
+              `,
+                )
+                .join("")}
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card activity-card">
+          <div class="card-header">
+            <h3>Recent Activity</h3>
+            <span class="activity-badge live">Live</span>
+          </div>
+          <div class="activity-list">
+            ${StudentData.recentActivity
+              .map(
+                (activity) => `
+              <div class="activity-item ${activity.isNew ? "new" : ""}">
+                <div class="activity-icon ${activity.type}">${activity.icon}</div>
+                <div class="activity-content">
+                  <p><strong>${activity.title}</strong> ${activity.description}</p>
+                  <small>${activity.time}</small>
+                </div>
+                <div class="activity-status ${activity.isNew ? "new" : ""}"></div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllActivity()">View all activity</button>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="card achievements-card">
+          <div class="card-header">
+            <h3>Achievements</h3>
+            <span class="achievement-count">${StudentData.achievements.filter((a) => a.earned).length}/${StudentData.achievements.length}</span>
+          </div>
+          <div class="achievements-list">
+            ${StudentData.achievements
+              .map(
+                (achievement) => `
+              <div class="achievement-item ${achievement.earned ? "earned" : "locked"}">
+                <div class="achievement-icon">
+                  <span>${achievement.icon}</span>
+                  ${achievement.earned ? '<div class="earned-indicator">✓</div>' : ""}
+                </div>
+                <div class="achievement-info">
+                  <h4>${achievement.title}</h4>
+                  <p>${achievement.description}</p>
+                  ${
+                    achievement.earned
+                      ? `<small>Earned on ${new Date(achievement.date).toLocaleDateString()}</small>`
+                      : achievement.progress
+                        ? `<div class="achievement-progress">
+                        <div class="progress-bar mini">
+                          <div class="progress-fill" style="width: ${achievement.progress}%"></div>
+                        </div>
+                        <span>${achievement.progress}%</span>
+                      </div>`
+                        : "<small>Not earned yet</small>"
+                  }
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <div class="card-footer">
+            <button class="btn-link" onclick="viewAllAchievements()">View all achievements</button>
+          </div>
+        </div>
+
+        <!-- Quick Tools -->
+        <div class="card tools-card">
+          <div class="card-header">
+            <h3>Study Tools</h3>
+          </div>
+          <div class="tools-grid">
+            <button class="tool-btn" onclick="openNotepad()">
+              <span class="tool-icon">📝</span>
+              <span class="tool-name">Quick Notes</span>
+            </button>
+            <button class="tool-btn" onclick="openCalculator()">
+              <span class="tool-icon">🧮</span>
+              <span class="tool-name">Calculator</span>
+            </button>
+            <button class="tool-btn" onclick="openPomodoroTimer()">
+              <span class="tool-icon">⏰</span>
+              <span class="tool-name">Pomodoro</span>
+            </button>
+            <button class="tool-btn" onclick="openStudyGroups()">
+              <span class="tool-icon">👥</span>
+              <span class="tool-name">Study Groups</span>
+            </button>
+            <button class="tool-btn" onclick="openLibrary()">
+              <span class="tool-icon">📚</span>
+              <span class="tool-name">Library</span>
+            </button>
+            <button class="tool-btn" onclick="openMessaging()">
+              <span class="tool-icon">💬</span>
+              <span class="tool-name">Messages</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Create guest dashboard
+function createGuestDashboard() {
+  return `
+    <div class="guest-dashboard">
+      <div class="page-header">
+        <h1>Welcome to AcademicHub</h1>
+        <p>Your gateway to educational excellence</p>
+      </div>
+
+      <div class="welcome-content">
+        <div class="card welcome-card">
+          <h3>Get Started</h3>
+          <p>Join thousands of students and educators in our learning community.</p>
+          <div class="welcome-actions">
+            <button class="btn-primary" onclick="showLogin()">Sign In</button>
+            <button class="btn-secondary" onclick="navigateToPage('resources')">Browse Resources</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // Dropdown functions
@@ -280,9 +1612,32 @@ function createResourceCard(resource) {
 function downloadResource(id) {
   const resource = AppState.resources.find((r) => r.id === id);
   if (resource) {
-    resource.downloads++;
-    showNotification(`Downloading "${resource.title}"...`, "success");
-    // In a real app, this would trigger an actual download
+    const downloadBtn = event.target;
+    const originalText = downloadBtn.textContent;
+
+    // Add download animation
+    downloadBtn.style.background = "var(--accent-success)";
+    downloadBtn.innerHTML =
+      '<div class="loading-spinner"></div> Downloading...';
+    downloadBtn.disabled = true;
+
+    setTimeout(() => {
+      resource.downloads++;
+      downloadBtn.innerHTML = "✓ Downloaded";
+      downloadBtn.style.background = "var(--accent-success)";
+
+      setTimeout(() => {
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.style.background = "";
+        downloadBtn.disabled = false;
+      }, 2000);
+
+      showNotification(
+        `"${resource.title}" downloaded successfully!`,
+        "success",
+      );
+      renderResources(); // Refresh to show updated download count
+    }, 1500);
   }
 }
 
@@ -297,22 +1652,142 @@ function viewResource(id) {
 function searchResources() {
   const query = $("#search-input").value.toLowerCase();
   const category = $("#category-filter").value;
+  const sortBy = $("#sort-filter").value;
+  const clearBtn = $("#search-clear");
 
-  let filtered = AppState.resources;
+  // Show/hide clear button
+  if (query) {
+    clearBtn.style.display = "block";
+  } else {
+    clearBtn.style.display = "none";
+  }
 
+  let filtered = [...AppState.resources];
+
+  // Filter by search query
   if (query) {
     filtered = filtered.filter(
       (resource) =>
         resource.title.toLowerCase().includes(query) ||
-        resource.description.toLowerCase().includes(query),
+        resource.description.toLowerCase().includes(query) ||
+        resource.author.toLowerCase().includes(query),
     );
   }
 
+  // Filter by category
   if (category) {
     filtered = filtered.filter((resource) => resource.category === category);
   }
 
+  // Sort results
+  switch (sortBy) {
+    case "popular":
+      filtered.sort((a, b) => b.downloads - a.downloads);
+      break;
+    case "recent":
+      filtered.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+      break;
+    case "rating":
+      // Simulate rating system
+      filtered.sort(() => Math.random() - 0.5);
+      break;
+    case "downloads":
+      filtered.sort((a, b) => b.downloads - a.downloads);
+      break;
+  }
+
   renderResources(filtered);
+
+  // Show search results count
+  updateSearchResults(filtered.length, AppState.resources.length);
+}
+
+function clearSearch() {
+  $("#search-input").value = "";
+  $("#search-clear").style.display = "none";
+  searchResources();
+}
+
+function updateSearchResults(found, total) {
+  const existingResult = $(".search-results");
+  if (existingResult) existingResult.remove();
+
+  const resultElement = document.createElement("div");
+  resultElement.className = "search-results";
+  resultElement.innerHTML = `
+    <p>Showing ${found} of ${total} resources</p>
+  `;
+  resultElement.style.cssText = `
+    margin: var(--space-4) 0;
+    color: var(--neutral-400);
+    font-size: var(--font-size-sm);
+    text-align: center;
+  `;
+
+  const resourcesGrid = $("#resources-grid");
+  resourcesGrid.parentNode.insertBefore(resultElement, resourcesGrid);
+}
+
+function showAnalytics() {
+  showNotification("Analytics dashboard coming soon!", "info");
+
+  // Simulate analytics modal
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="modal-content analytics-modal">
+      <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+      <h2>Analytics Dashboard</h2>
+      <div class="analytics-grid">
+        <div class="analytics-chart">
+          <h3>Resource Views</h3>
+          <div class="chart-placeholder">📊 Chart visualization</div>
+        </div>
+        <div class="analytics-chart">
+          <h3>Download Trends</h3>
+          <div class="chart-placeholder">📈 Trend analysis</div>
+        </div>
+        <div class="analytics-chart">
+          <h3>User Engagement</h3>
+          <div class="chart-placeholder">👥 Engagement metrics</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add analytics modal styles
+  const style = document.createElement("style");
+  style.textContent = `
+    .analytics-modal {
+      max-width: 800px;
+      width: 90vw;
+    }
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-6);
+    }
+    .analytics-chart {
+      background: var(--glass-bg);
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--glass-border);
+    }
+    .chart-placeholder {
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-hover);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-2);
+      font-size: var(--font-size-lg);
+    }
+  `;
+
+  document.head.appendChild(style);
+  document.body.appendChild(modal);
 }
 
 // Upload functions
@@ -429,20 +1904,30 @@ document.addEventListener("DOMContentLoaded", function () {
   updateUI();
 
   // Modal close functionality
-  $(".close").addEventListener("click", hideLogin);
-  $("#auth-modal").addEventListener("click", function (e) {
-    if (e.target === this) {
-      hideLogin();
-    }
-  });
+  const closeBtn = $(".close-btn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", hideLogin);
+  }
+
+  const authModal = $("#auth-modal");
+  if (authModal) {
+    authModal.addEventListener("click", function (e) {
+      if (e.target === this) {
+        hideLogin();
+      }
+    });
+  }
 
   // Login form
-  $("#loginForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const email = $("#email").value;
-    const password = $("#password").value;
-    login(email, password);
-  });
+  const loginForm = $("#loginForm");
+  if (loginForm) {
+    loginForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const email = $("#login-email").value;
+      const password = $("#login-password").value;
+      login(email, password);
+    });
+  }
 
   // Navigation links
   $$(".nav-link").forEach((link) => {
@@ -455,45 +1940,97 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Search functionality
-  $("#search-input").addEventListener("input", searchResources);
-  $("#category-filter").addEventListener("change", searchResources);
+  // Enhanced search functionality
+  const searchInput = $("#search-input");
+  if (searchInput) {
+    searchInput.addEventListener("input", searchResources);
+  }
+
+  const categoryFilter = $("#category-filter");
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", searchResources);
+  }
+
+  const sortFilter = $("#sort-filter");
+  if (sortFilter) {
+    sortFilter.addEventListener("change", searchResources);
+  }
+
+  const searchClear = $("#search-clear");
+  if (searchClear) {
+    searchClear.addEventListener("click", clearSearch);
+  }
+
+  // Search on enter key
+  if (searchInput) {
+    searchInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        searchResources();
+      }
+    });
+  }
+
+  // Enhanced search button
+  const searchBtn = $(".search-btn");
+  if (searchBtn) {
+    searchBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      searchResources();
+
+      // Add search animation
+      this.style.transform = "scale(0.95)";
+      setTimeout(() => {
+        this.style.transform = "";
+      }, 150);
+    });
+  }
 
   // Upload form
-  $("#upload-form").addEventListener("submit", handleUpload);
+  const uploadForm = $("#upload-form");
+  if (uploadForm) {
+    uploadForm.addEventListener("submit", handleUpload);
+  }
 
   // File upload drag and drop
   const fileUpload = $(".file-upload");
   const fileInput = $("#file");
 
-  fileUpload.addEventListener("click", () => fileInput.click());
+  if (fileUpload && fileInput) {
+    fileUpload.addEventListener("click", () => fileInput.click());
 
-  fileUpload.addEventListener("dragover", function (e) {
-    e.preventDefault();
-    this.style.borderColor = "#3a45df";
-  });
+    fileUpload.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      this.style.borderColor = "#3a45df";
+    });
 
-  fileUpload.addEventListener("dragleave", function (e) {
-    e.preventDefault();
-    this.style.borderColor = "#212530";
-  });
+    fileUpload.addEventListener("dragleave", function (e) {
+      e.preventDefault();
+      this.style.borderColor = "#212530";
+    });
 
-  fileUpload.addEventListener("drop", function (e) {
-    e.preventDefault();
-    this.style.borderColor = "#212530";
+    fileUpload.addEventListener("drop", function (e) {
+      e.preventDefault();
+      this.style.borderColor = "#212530";
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      fileInput.files = files;
-      $(".file-upload-text p").textContent = `Selected: ${files[0].name}`;
-    }
-  });
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        const fileText = $(".file-upload-text p");
+        if (fileText) {
+          fileText.textContent = `Selected: ${files[0].name}`;
+        }
+      }
+    });
 
-  fileInput.addEventListener("change", function () {
-    if (this.files.length > 0) {
-      $(".file-upload-text p").textContent = `Selected: ${this.files[0].name}`;
-    }
-  });
+    fileInput.addEventListener("change", function () {
+      if (this.files.length > 0) {
+        const fileText = $(".file-upload-text p");
+        if (fileText) {
+          fileText.textContent = `Selected: ${this.files[0].name}`;
+        }
+      }
+    });
+  }
 
   // Close dropdown when clicking outside
   document.addEventListener("click", function (e) {
@@ -510,11 +2047,215 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Initialize theme
+  initializeTheme();
+
+  // Signup form
+  const signupForm = $("#signupForm");
+  if (signupForm) {
+    signupForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      if (validateForm("#signupForm")) {
+        const formData = new FormData(this);
+        const userData = {
+          firstname: formData.get("firstname"),
+          lastname: formData.get("lastname"),
+          email: formData.get("email"),
+          role: formData.get("role"),
+          password: formData.get("password"),
+        };
+
+        // Simulate signup process
+        const submitBtn = this.querySelector(".auth-submit");
+        const btnText = submitBtn.querySelector(".btn-text");
+        const loader = submitBtn.querySelector(".btn-loader");
+
+        btnText.style.opacity = "0";
+        loader.style.display = "block";
+        submitBtn.disabled = true;
+
+        setTimeout(() => {
+          btnText.textContent = "Account Created!";
+          btnText.style.opacity = "1";
+          loader.style.display = "none";
+          submitBtn.style.background = "var(--accent-success)";
+
+          setTimeout(() => {
+            showNotification(
+              "Account created successfully! Please check your email.",
+              "success",
+            );
+            switchAuthTab("login");
+
+            // Reset form
+            this.reset();
+            btnText.textContent = "Create Account";
+            submitBtn.style.background = "";
+            submitBtn.disabled = false;
+          }, 1500);
+        }, 2000);
+      }
+    });
+  }
+
+  // Password strength checking
+  const signupPassword = $("#signup-password");
+  if (signupPassword) {
+    signupPassword.addEventListener("input", function () {
+      updatePasswordStrength("#signup-password");
+    });
+  }
+
+  // Real-time validation
+  $$('input[type="email"]').forEach((input) => {
+    input.addEventListener("blur", function () {
+      const feedback = this.parentElement.querySelector(".input-feedback");
+      if (feedback && this.value) {
+        if (validateEmail(this.value)) {
+          feedback.textContent = "✓ Valid email";
+          feedback.className = "input-feedback success";
+          this.style.borderColor = "#10b981";
+        } else {
+          feedback.textContent = "Please enter a valid email";
+          feedback.className = "input-feedback error";
+          this.style.borderColor = "#ef4444";
+        }
+      }
+    });
+  });
+
   // Initialize resources if on resources page
   if (AppState.currentPage === "resources") {
     renderResources();
   }
+
+  // Add interactive effects
+  addInteractiveEffects();
+
+  // Add parallax effect (disabled on mobile for performance)
+  if (window.innerWidth > 768) {
+    addParallaxEffect();
+  }
+
+  // Animate dashboard on initial load if user is logged in
+  if (AppState.user && AppState.currentPage === "dashboard") {
+    setTimeout(() => {
+      if (AppState.user.role === "lecturer") {
+        // Lecturer dashboard is handled by initializeLecturerDashboard
+      } else {
+        animateDashboardStats();
+      }
+    }, 500);
+  }
+
+  // Ensure dashboard content is loaded on initial page load
+  if (AppState.currentPage === "dashboard") {
+    updateDashboardContent();
+  }
 });
+
+// Dashboard animations
+function animateDashboardStats() {
+  const statCards = $$(".stat-card");
+  const statNumbers = $$(".stat-number");
+
+  statCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.animation = "fadeInUp 0.6s ease-out forwards";
+      card.style.opacity = "0";
+
+      setTimeout(() => {
+        card.style.opacity = "1";
+      }, 100);
+    }, index * 150);
+  });
+
+  // Animate numbers counting up
+  setTimeout(() => {
+    const numbers = [24, 156, 1247, 4.8];
+    statNumbers.forEach((element, index) => {
+      const endValue = numbers[index];
+      animateValue(element, 0, endValue, 1500);
+    });
+  }, 500);
+
+  // Animate activity items
+  setTimeout(() => {
+    const activityItems = $$(".activity-item");
+    activityItems.forEach((item, index) => {
+      setTimeout(() => {
+        item.style.animation = "slideInRight 0.5s ease-out forwards";
+      }, index * 100);
+    });
+  }, 1000);
+}
+
+// Enhanced interactions
+function addInteractiveEffects() {
+  // Add ripple effect to buttons
+  $$("button, .btn-primary, .btn-secondary, .btn-ghost").forEach((button) => {
+    button.addEventListener("click", function (e) {
+      if (!this.disabled) {
+        createRippleEffect(this, e);
+      }
+    });
+  });
+
+  // Add hover sound effect (visual feedback)
+  $$(".nav-link, .action-btn, .resource-card").forEach((element) => {
+    element.addEventListener("mouseenter", function () {
+      this.style.transform = "translateY(-2px)";
+    });
+
+    element.addEventListener("mouseleave", function () {
+      this.style.transform = "";
+    });
+  });
+
+  // Enhanced form validation feedback
+  $$("input, textarea, select").forEach((input) => {
+    input.addEventListener("invalid", function () {
+      this.style.animation = "shake 0.5s ease-in-out";
+      setTimeout(() => (this.style.animation = ""), 500);
+    });
+
+    input.addEventListener("input", function () {
+      if (this.validity.valid) {
+        this.style.borderColor = "var(--accent-success)";
+      } else {
+        this.style.borderColor = "";
+      }
+    });
+  });
+}
+
+// Parallax scrolling effect
+function addParallaxEffect() {
+  let ticking = false;
+
+  function updateParallax() {
+    const scrolled = window.pageYOffset;
+    const parallaxElements = $$(".stat-card, .card");
+
+    parallaxElements.forEach((element, index) => {
+      const speed = 0.5 + index * 0.1;
+      const yPos = -((scrolled * speed) / 10);
+      element.style.transform = `translateY(${yPos}px)`;
+    });
+
+    ticking = false;
+  }
+
+  function requestTick() {
+    if (!ticking) {
+      requestAnimationFrame(updateParallax);
+      ticking = true;
+    }
+  }
+
+  window.addEventListener("scroll", requestTick);
+}
 
 // Expose functions to global scope for inline event handlers
 window.showLogin = showLogin;
@@ -526,3 +2267,839 @@ window.navigateToPage = navigateToPage;
 window.toggleDropdown = toggleDropdown;
 window.downloadResource = downloadResource;
 window.viewResource = viewResource;
+// Authentication tab switching
+function switchAuthTab(tab) {
+  AppState.currentAuthTab = tab;
+
+  // Update tab buttons
+  $$(".tab-btn").forEach((btn) => {
+    btn.classList.remove("active");
+    if (btn.dataset.tab === tab) {
+      btn.classList.add("active");
+    }
+  });
+
+  // Update tab content
+  $$(".tab-content").forEach((content) => {
+    content.classList.remove("active");
+  });
+
+  const targetTab = $(`#${tab}-tab`);
+  if (targetTab) {
+    targetTab.classList.add("active");
+  }
+
+  // Update header text
+  const title = $("#auth-title");
+  const subtitle = $("#auth-subtitle");
+
+  if (tab === "login") {
+    if (title) title.textContent = "Welcome Back";
+    if (subtitle)
+      subtitle.textContent = "Access your personalized learning dashboard";
+  } else {
+    if (title) title.textContent = "Join AcademicHub";
+    if (subtitle)
+      subtitle.textContent = "Create your account and start learning today";
+  }
+}
+
+// Theme management
+function initializeTheme() {
+  const savedTheme = localStorage.getItem("academicHub_theme") || "dark";
+  AppState.theme = savedTheme;
+  document.body.classList.toggle("light-mode", savedTheme === "light");
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  AppState.theme = AppState.theme === "dark" ? "light" : "dark";
+  localStorage.setItem("academicHub_theme", AppState.theme);
+  document.body.classList.toggle("light-mode", AppState.theme === "light");
+  updateThemeIcon();
+
+  // Add transition effect
+  document.body.style.transition = "all 0.3s ease";
+  setTimeout(() => {
+    document.body.style.transition = "";
+  }, 300);
+}
+
+function updateThemeIcon() {
+  const sunIcon = $(".sun-icon");
+  const moonIcon = $(".moon-icon");
+
+  if (AppState.theme === "light") {
+    if (sunIcon) sunIcon.style.opacity = "0";
+    if (moonIcon) moonIcon.style.opacity = "1";
+  } else {
+    if (sunIcon) sunIcon.style.opacity = "1";
+    if (moonIcon) moonIcon.style.opacity = "0";
+  }
+}
+
+// Social login simulation
+function socialLogin(provider) {
+  showNotification(
+    `${provider.charAt(0).toUpperCase() + provider.slice(1)} login coming soon!`,
+    "info",
+  );
+}
+
+// Additional modal functions
+function showForgotPassword() {
+  showNotification("Password reset functionality coming soon!", "info");
+}
+
+function showTerms() {
+  showNotification("Terms of Service modal coming soon!", "info");
+}
+
+function showPrivacy() {
+  showNotification("Privacy Policy modal coming soon!", "info");
+}
+
+// Password strength checker
+function checkPasswordStrength(password) {
+  let strength = 0;
+  const checks = {
+    length: password.length >= 8,
+    lowercase: /[a-z]/.test(password),
+    uppercase: /[A-Z]/.test(password),
+    numbers: /\d/.test(password),
+    symbols: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+
+  strength = Object.values(checks).filter(Boolean).length;
+
+  const strengthLevels = ["weak", "weak", "fair", "good", "strong"];
+  return {
+    score: strength,
+    level: strengthLevels[Math.min(strength, 4)],
+    checks,
+  };
+}
+
+function updatePasswordStrength(inputId) {
+  const input = $(inputId);
+  const strengthBar =
+    input?.parentElement?.nextElementSibling?.querySelector(".strength-fill");
+  const strengthText =
+    input?.parentElement?.nextElementSibling?.querySelector(".strength-text");
+
+  if (!input || !strengthBar || !strengthText) return;
+
+  const result = checkPasswordStrength(input.value);
+
+  // Update bar
+  strengthBar.className = `strength-fill ${result.level}`;
+
+  // Update text
+  strengthText.className = `strength-text ${result.level}`;
+  strengthText.textContent =
+    result.level === "weak"
+      ? "Weak password"
+      : result.level === "fair"
+        ? "Fair password"
+        : result.level === "good"
+          ? "Good password"
+          : result.level === "strong"
+            ? "Strong password"
+            : "Password strength";
+}
+
+// Enhanced form validation
+function validateEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function validateForm(formId) {
+  const form = $(formId);
+  if (!form) return false;
+
+  let isValid = true;
+  const inputs = form.querySelectorAll("input[required], select[required]");
+
+  inputs.forEach((input) => {
+    const feedback = input.parentElement.querySelector(".input-feedback");
+    if (!feedback) return;
+
+    let message = "";
+    let type = "";
+
+    if (!input.value.trim()) {
+      message = "This field is required";
+      type = "error";
+      isValid = false;
+    } else if (input.type === "email" && !validateEmail(input.value)) {
+      message = "Please enter a valid email address";
+      type = "error";
+      isValid = false;
+    } else if (input.id === "signup-confirm-password") {
+      const password = $("#signup-password")?.value;
+      if (input.value !== password) {
+        message = "Passwords do not match";
+        type = "error";
+        isValid = false;
+      }
+    }
+
+    if (message) {
+      feedback.textContent = message;
+      feedback.className = `input-feedback ${type}`;
+      input.style.borderColor = type === "error" ? "#ef4444" : "#10b981";
+    } else {
+      feedback.textContent = "";
+      feedback.className = "input-feedback";
+      input.style.borderColor = "";
+    }
+  });
+
+  return isValid;
+}
+
+window.animateDashboardStats = animateDashboardStats;
+window.showAnalytics = showAnalytics;
+window.clearSearch = clearSearch;
+window.switchAuthTab = switchAuthTab;
+window.toggleTheme = toggleTheme;
+window.socialLogin = socialLogin;
+window.showForgotPassword = showForgotPassword;
+window.showTerms = showTerms;
+window.showPrivacy = showPrivacy;
+
+// Lecturer Dashboard Functions
+function initializeLecturerDashboard() {
+  // Initialize mini charts
+  initializeMiniCharts();
+
+  // Initialize analytics chart
+  initializeAnalyticsChart();
+
+  // Add event listeners for analytics tabs
+  $$(".analytics-tabs .tab-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      $$(".analytics-tabs .tab-btn").forEach((b) =>
+        b.classList.remove("active"),
+      );
+      this.classList.add("active");
+      updateAnalyticsChart(this.dataset.tab);
+    });
+  });
+
+  // Animate stat cards
+  setTimeout(() => {
+    animateLecturerStats();
+  }, 300);
+}
+
+function initializeMiniCharts() {
+  $$(".mini-chart").forEach((chart) => {
+    const values = JSON.parse(chart.dataset.values || "[0,0,0,0,0]");
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    const range = max - min || 1;
+
+    let chartHTML = '<svg viewBox="0 0 50 20" class="mini-chart-svg">';
+
+    // Create path
+    let pathData = "M ";
+    values.forEach((value, index) => {
+      const x = (index / (values.length - 1)) * 48 + 1;
+      const y = 19 - ((value - min) / range) * 18;
+      pathData += `${index === 0 ? "" : "L "}${x},${y} `;
+    });
+
+    chartHTML += `<path d="${pathData}" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.8"/>`;
+    chartHTML += "</svg>";
+
+    chart.innerHTML = chartHTML;
+  });
+}
+
+function initializeAnalyticsChart() {
+  const canvas = $("#engagement-chart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Sample data for engagement over time
+  const data = [65, 70, 75, 72, 80, 85, 92];
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+
+  // Draw chart
+  drawLineChart(ctx, data, labels, width, height);
+}
+
+function drawLineChart(ctx, data, labels, width, height) {
+  const padding = 30;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+
+  // Set styles
+  ctx.strokeStyle = "#7c3aed";
+  ctx.fillStyle = "rgba(124, 58, 237, 0.1)";
+  ctx.lineWidth = 2;
+
+  // Draw grid lines
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.lineWidth = 1;
+
+  // Vertical grid lines
+  for (let i = 0; i <= 6; i++) {
+    const x = padding + (i / 6) * chartWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, padding);
+    ctx.lineTo(x, height - padding);
+    ctx.stroke();
+  }
+
+  // Horizontal grid lines
+  for (let i = 0; i <= 4; i++) {
+    const y = padding + (i / 4) * chartHeight;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(width - padding, y);
+    ctx.stroke();
+  }
+
+  // Draw area fill
+  ctx.strokeStyle = "#7c3aed";
+  ctx.fillStyle = "rgba(124, 58, 237, 0.1)";
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    if (index === 0) {
+      ctx.moveTo(x, height - padding);
+      ctx.lineTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+
+  ctx.lineTo(width - padding, height - padding);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw line
+  ctx.beginPath();
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  // Draw points
+  ctx.fillStyle = "#7c3aed";
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw labels
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.font = "10px Inter";
+  ctx.textAlign = "center";
+
+  labels.forEach((label, index) => {
+    const x = padding + (index / (labels.length - 1)) * chartWidth;
+    ctx.fillText(label, x, height - 10);
+  });
+}
+
+function animateLecturerStats() {
+  const statCards = $$(".lecturer-stats-grid .stat-card");
+
+  statCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.animation = "fadeInUp 0.6s ease-out forwards";
+      card.style.opacity = "0";
+
+      setTimeout(() => {
+        card.style.opacity = "1";
+
+        // Animate the number
+        const numberElement = card.querySelector(".stat-number");
+        if (numberElement) {
+          const finalValue = parseInt(numberElement.textContent) || 0;
+          animateValue(numberElement, 0, finalValue, 1000);
+        }
+      }, 100);
+    }, index * 150);
+  });
+}
+
+function updateAnalyticsChart(period) {
+  // This would update the chart with different data based on the period
+  showNotification(`Analytics updated for ${period} view`, "info");
+}
+
+// Lecturer Action Functions
+function createNewCourse() {
+  showNotification("Course creation wizard coming soon!", "info");
+}
+
+function createAnnouncement() {
+  showNotification("Announcement system coming soon!", "info");
+}
+
+function refreshCourses() {
+  showNotification("Courses refreshed!", "success");
+  // Add refresh animation
+  const coursesCard = $(".courses-overview");
+  if (coursesCard) {
+    coursesCard.style.opacity = "0.5";
+    setTimeout(() => {
+      coursesCard.style.opacity = "1";
+    }, 500);
+  }
+}
+
+function manageAllCourses() {
+  showNotification("Course management interface coming soon!", "info");
+}
+
+function viewCourse(courseId) {
+  showNotification(`Opening course ${courseId} details...`, "info");
+}
+
+function editCourse(courseId) {
+  showNotification(`Editing course ${courseId}...`, "info");
+}
+
+function viewAllActivity() {
+  showNotification("Activity history coming soon!", "info");
+}
+
+function viewAllStudents() {
+  showNotification("Student management interface coming soon!", "info");
+}
+
+function gradeAssignments() {
+  showNotification("Grading interface coming soon!", "info");
+}
+
+function messageStudents() {
+  showNotification("Messaging system coming soon!", "info");
+}
+
+function scheduleClass() {
+  showNotification("Class scheduling coming soon!", "info");
+}
+
+function viewReports() {
+  showNotification("Detailed reports coming soon!", "info");
+}
+
+function viewAssignments() {
+  showNotification("Assignment viewer coming soon!", "info");
+}
+
+// Expose lecturer functions
+window.createNewCourse = createNewCourse;
+window.createAnnouncement = createAnnouncement;
+window.refreshCourses = refreshCourses;
+window.manageAllCourses = manageAllCourses;
+window.viewCourse = viewCourse;
+window.editCourse = editCourse;
+window.viewAllActivity = viewAllActivity;
+window.viewAllStudents = viewAllStudents;
+window.gradeAssignments = gradeAssignments;
+window.messageStudents = messageStudents;
+window.scheduleClass = scheduleClass;
+window.viewReports = viewReports;
+window.viewAssignments = viewAssignments;
+
+// New lecturer header navigation functions
+function showCourseOverview() {
+  showNotification("Course overview coming soon!", "info");
+
+  // Update active nav link
+  $$(".nav-link").forEach((link) => link.classList.remove("active"));
+  event.target.closest(".nav-link").classList.add("active");
+}
+
+// Expose new navigation functions
+window.showCourseOverview = showCourseOverview;
+
+// Comprehensive Student Dashboard Functions
+function startStudySession() {
+  showNotification(
+    "Study session started! 📚 Focus mode activated.",
+    "success",
+  );
+
+  // Simulate study session tracking
+  const studyModal = document.createElement("div");
+  studyModal.className = "modal";
+  studyModal.innerHTML = `
+    <div class="modal-content study-session-modal">
+      <div class="study-header">
+        <h3>Study Session Active</h3>
+        <div class="study-timer">
+          <div class="timer-display">25:00</div>
+          <div class="timer-controls">
+            <button class="btn-secondary" onclick="pauseStudySession()">Pause</button>
+            <button class="btn-primary" onclick="endStudySession()">End Session</button>
+          </div>
+        </div>
+      </div>
+      <div class="study-subject-selector">
+        <label>What are you studying?</label>
+        <select id="study-subject">
+          <option value="cs301">Data Structures & Algorithms</option>
+          <option value="cs305">Database Systems</option>
+          <option value="cs350">Software Engineering</option>
+          <option value="math320">Discrete Mathematics</option>
+        </select>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(studyModal);
+  setTimeout(() => studyModal.remove(), 5000);
+}
+
+function viewAllCourses() {
+  showNotification("Opening course catalog...", "info");
+}
+
+function viewAssignments() {
+  showNotification("Loading assignments dashboard...", "info");
+}
+
+function viewAnalytics() {
+  showNotification("Opening detailed analytics...", "info");
+}
+
+function viewGrades() {
+  showNotification("Loading grade report...", "info");
+}
+
+function viewFullSchedule() {
+  showNotification("Opening full schedule view...", "info");
+}
+
+function addNewAssignment() {
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="modal-content assignment-modal">
+      <div class="modal-header">
+        <h3>Add New Assignment</h3>
+        <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+      </div>
+      <form class="assignment-form">
+        <div class="form-group">
+          <label>Assignment Title</label>
+          <input type="text" placeholder="Enter assignment title" required>
+        </div>
+        <div class="form-group">
+          <label>Course</label>
+          <select required>
+            <option value="">Select course</option>
+            <option value="cs301">CS301 - Data Structures</option>
+            <option value="cs305">CS305 - Database Systems</option>
+            <option value="cs350">CS350 - Software Engineering</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" required>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary">Add Assignment</button>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function editAssignment(id) {
+  showNotification(`Editing assignment ${id}...`, "info");
+}
+
+function viewAllAssignments() {
+  showNotification("Opening assignments manager...", "info");
+}
+
+function enrollInCourse() {
+  showNotification("Opening course enrollment...", "info");
+}
+
+function updateStudyAnalytics(period) {
+  showNotification(`Analytics updated for ${period} view`, "info");
+}
+
+function viewAllActivity() {
+  showNotification("Loading activity history...", "info");
+}
+
+function viewAllAchievements() {
+  showNotification("Opening achievements gallery...", "info");
+}
+
+// Study Tools Functions
+function openNotepad() {
+  const notepad = document.createElement("div");
+  notepad.className = "modal";
+  notepad.innerHTML = `
+    <div class="modal-content notepad-modal">
+      <div class="modal-header">
+        <h3>Quick Notes</h3>
+        <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+      </div>
+      <div class="notepad-content">
+        <textarea placeholder="Start taking notes..." rows="10" style="width: 100%; resize: vertical; padding: 1rem; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--glass-bg); color: var(--neutral-50);"></textarea>
+        <div class="notepad-actions" style="margin-top: 1rem; display: flex; gap: 1rem;">
+          <button class="btn-primary">Save Note</button>
+          <button class="btn-secondary">Clear</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(notepad);
+}
+
+function openCalculator() {
+  showNotification("Opening calculator...", "info");
+}
+
+function openPomodoroTimer() {
+  const timer = document.createElement("div");
+  timer.className = "modal";
+  timer.innerHTML = `
+    <div class="modal-content pomodoro-modal">
+      <div class="modal-header">
+        <h3>Pomodoro Timer</h3>
+        <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+      </div>
+      <div class="pomodoro-content" style="text-align: center; padding: 2rem;">
+        <div class="timer-circle" style="width: 200px; height: 200px; border: 8px solid var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 2rem; font-weight: bold; color: var(--primary-400);">
+          25:00
+        </div>
+        <div class="timer-controls" style="display: flex; gap: 1rem; justify-content: center;">
+          <button class="btn-primary">Start</button>
+          <button class="btn-secondary">Pause</button>
+          <button class="btn-secondary">Reset</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(timer);
+}
+
+function openStudyGroups() {
+  showNotification("Loading study groups...", "info");
+}
+
+function openLibrary() {
+  navigateToPage("resources");
+}
+
+function openMessaging() {
+  showNotification("Opening messaging system...", "info");
+}
+
+function pauseStudySession() {
+  showNotification("Study session paused", "info");
+}
+
+function endStudySession() {
+  showNotification("Study session completed! Great work! 🎉", "success");
+
+  // Update study streak
+  StudentData.stats.studyStreak++;
+  StudentData.stats.totalStudyHours += 0.5;
+
+  // Remove modal
+  const modal = document.querySelector(".study-session-modal");
+  if (modal) {
+    modal.parentElement.remove();
+  }
+}
+
+// Initialize student dashboard features
+function initializeStudentDashboard() {
+  // Initialize progress circles
+  setTimeout(() => {
+    initializeProgressCircles();
+    animateStudentStats();
+    initializeStudyChart();
+  }, 300);
+}
+
+function initializeProgressCircles() {
+  $$(".progress-circle").forEach((circle) => {
+    const progress = circle.dataset.progress || 0;
+    const strokeDasharray = `${progress}, 100`;
+    const pathElement = circle.querySelector(".circle");
+    if (pathElement) {
+      pathElement.style.strokeDasharray = strokeDasharray;
+    }
+  });
+}
+
+function animateStudentStats() {
+  const statCards = $$(".student-stats-grid .stat-card");
+
+  statCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.animation = "fadeInUp 0.6s ease-out forwards";
+      card.style.opacity = "0";
+
+      setTimeout(() => {
+        card.style.opacity = "1";
+
+        // Animate the number
+        const numberElement = card.querySelector(".stat-number");
+        if (numberElement && !isNaN(parseInt(numberElement.textContent))) {
+          const finalValue = parseInt(numberElement.textContent);
+          animateValue(numberElement, 0, finalValue, 1000);
+        }
+      }, 100);
+    }, index * 150);
+  });
+}
+
+function initializeStudyChart() {
+  const canvas = $("#study-chart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Sample study data
+  const data = [4, 6, 5, 8, 7, 9, 6];
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+
+  // Draw chart
+  drawStudyChart(ctx, data, labels, width, height);
+}
+
+function drawStudyChart(ctx, data, labels, width, height) {
+  const padding = 30;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  const max = Math.max(...data);
+  const min = 0;
+  const range = max - min || 1;
+
+  // Set styles
+  ctx.strokeStyle = "#10b981";
+  ctx.fillStyle = "rgba(16, 185, 129, 0.1)";
+  ctx.lineWidth = 3;
+
+  // Draw area fill
+  ctx.beginPath();
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    if (index === 0) {
+      ctx.moveTo(x, height - padding);
+      ctx.lineTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+
+  ctx.lineTo(width - padding, height - padding);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw line
+  ctx.beginPath();
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  // Draw points
+  ctx.fillStyle = "#10b981";
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw labels
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.font = "10px Inter";
+  ctx.textAlign = "center";
+
+  labels.forEach((label, index) => {
+    const x = padding + (index / (labels.length - 1)) * chartWidth;
+    ctx.fillText(label, x, height - 10);
+  });
+}
+
+// Expose all student functions
+window.startStudySession = startStudySession;
+window.viewAllCourses = viewAllCourses;
+window.viewAnalytics = viewAnalytics;
+window.viewGrades = viewGrades;
+window.viewFullSchedule = viewFullSchedule;
+window.addNewAssignment = addNewAssignment;
+window.editAssignment = editAssignment;
+window.viewAllAssignments = viewAllAssignments;
+window.enrollInCourse = enrollInCourse;
+window.updateStudyAnalytics = updateStudyAnalytics;
+window.viewAllActivity = viewAllActivity;
+window.viewAllAchievements = viewAllAchievements;
+window.openNotepad = openNotepad;
+window.openCalculator = openCalculator;
+window.openPomodoroTimer = openPomodoroTimer;
+window.openStudyGroups = openStudyGroups;
+window.openLibrary = openLibrary;
+window.openMessaging = openMessaging;
+window.pauseStudySession = pauseStudySession;
+window.endStudySession = endStudySession;
+window.initializeStudentDashboard = initializeStudentDashboard;
