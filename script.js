@@ -994,6 +994,204 @@ window.navigateToPage = navigateToPage;
 window.toggleDropdown = toggleDropdown;
 window.downloadResource = downloadResource;
 window.viewResource = viewResource;
+// Authentication tab switching
+function switchAuthTab(tab) {
+  AppState.currentAuthTab = tab;
+
+  // Update tab buttons
+  $$(".tab-btn").forEach((btn) => {
+    btn.classList.remove("active");
+    if (btn.dataset.tab === tab) {
+      btn.classList.add("active");
+    }
+  });
+
+  // Update tab content
+  $$(".tab-content").forEach((content) => {
+    content.classList.remove("active");
+  });
+
+  const targetTab = $(`#${tab}-tab`);
+  if (targetTab) {
+    targetTab.classList.add("active");
+  }
+
+  // Update header text
+  const title = $("#auth-title");
+  const subtitle = $("#auth-subtitle");
+
+  if (tab === "login") {
+    if (title) title.textContent = "Welcome Back";
+    if (subtitle)
+      subtitle.textContent = "Access your personalized learning dashboard";
+  } else {
+    if (title) title.textContent = "Join AcademicHub";
+    if (subtitle)
+      subtitle.textContent = "Create your account and start learning today";
+  }
+}
+
+// Theme management
+function initializeTheme() {
+  const savedTheme = localStorage.getItem("academicHub_theme") || "dark";
+  AppState.theme = savedTheme;
+  document.body.classList.toggle("light-mode", savedTheme === "light");
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  AppState.theme = AppState.theme === "dark" ? "light" : "dark";
+  localStorage.setItem("academicHub_theme", AppState.theme);
+  document.body.classList.toggle("light-mode", AppState.theme === "light");
+  updateThemeIcon();
+
+  // Add transition effect
+  document.body.style.transition = "all 0.3s ease";
+  setTimeout(() => {
+    document.body.style.transition = "";
+  }, 300);
+}
+
+function updateThemeIcon() {
+  const sunIcon = $(".sun-icon");
+  const moonIcon = $(".moon-icon");
+
+  if (AppState.theme === "light") {
+    if (sunIcon) sunIcon.style.opacity = "0";
+    if (moonIcon) moonIcon.style.opacity = "1";
+  } else {
+    if (sunIcon) sunIcon.style.opacity = "1";
+    if (moonIcon) moonIcon.style.opacity = "0";
+  }
+}
+
+// Social login simulation
+function socialLogin(provider) {
+  showNotification(
+    `${provider.charAt(0).toUpperCase() + provider.slice(1)} login coming soon!`,
+    "info",
+  );
+}
+
+// Additional modal functions
+function showForgotPassword() {
+  showNotification("Password reset functionality coming soon!", "info");
+}
+
+function showTerms() {
+  showNotification("Terms of Service modal coming soon!", "info");
+}
+
+function showPrivacy() {
+  showNotification("Privacy Policy modal coming soon!", "info");
+}
+
+// Password strength checker
+function checkPasswordStrength(password) {
+  let strength = 0;
+  const checks = {
+    length: password.length >= 8,
+    lowercase: /[a-z]/.test(password),
+    uppercase: /[A-Z]/.test(password),
+    numbers: /\d/.test(password),
+    symbols: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+
+  strength = Object.values(checks).filter(Boolean).length;
+
+  const strengthLevels = ["weak", "weak", "fair", "good", "strong"];
+  return {
+    score: strength,
+    level: strengthLevels[Math.min(strength, 4)],
+    checks,
+  };
+}
+
+function updatePasswordStrength(inputId) {
+  const input = $(inputId);
+  const strengthBar =
+    input?.parentElement?.nextElementSibling?.querySelector(".strength-fill");
+  const strengthText =
+    input?.parentElement?.nextElementSibling?.querySelector(".strength-text");
+
+  if (!input || !strengthBar || !strengthText) return;
+
+  const result = checkPasswordStrength(input.value);
+
+  // Update bar
+  strengthBar.className = `strength-fill ${result.level}`;
+
+  // Update text
+  strengthText.className = `strength-text ${result.level}`;
+  strengthText.textContent =
+    result.level === "weak"
+      ? "Weak password"
+      : result.level === "fair"
+        ? "Fair password"
+        : result.level === "good"
+          ? "Good password"
+          : result.level === "strong"
+            ? "Strong password"
+            : "Password strength";
+}
+
+// Enhanced form validation
+function validateEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function validateForm(formId) {
+  const form = $(formId);
+  if (!form) return false;
+
+  let isValid = true;
+  const inputs = form.querySelectorAll("input[required], select[required]");
+
+  inputs.forEach((input) => {
+    const feedback = input.parentElement.querySelector(".input-feedback");
+    if (!feedback) return;
+
+    let message = "";
+    let type = "";
+
+    if (!input.value.trim()) {
+      message = "This field is required";
+      type = "error";
+      isValid = false;
+    } else if (input.type === "email" && !validateEmail(input.value)) {
+      message = "Please enter a valid email address";
+      type = "error";
+      isValid = false;
+    } else if (input.id === "signup-confirm-password") {
+      const password = $("#signup-password")?.value;
+      if (input.value !== password) {
+        message = "Passwords do not match";
+        type = "error";
+        isValid = false;
+      }
+    }
+
+    if (message) {
+      feedback.textContent = message;
+      feedback.className = `input-feedback ${type}`;
+      input.style.borderColor = type === "error" ? "#ef4444" : "#10b981";
+    } else {
+      feedback.textContent = "";
+      feedback.className = "input-feedback";
+      input.style.borderColor = "";
+    }
+  });
+
+  return isValid;
+}
+
 window.animateDashboardStats = animateDashboardStats;
 window.showAnalytics = showAnalytics;
 window.clearSearch = clearSearch;
+window.switchAuthTab = switchAuthTab;
+window.toggleTheme = toggleTheme;
+window.socialLogin = socialLogin;
+window.showForgotPassword = showForgotPassword;
+window.showTerms = showTerms;
+window.showPrivacy = showPrivacy;
