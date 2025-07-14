@@ -763,32 +763,55 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Enhanced search functionality
-  $("#search-input").addEventListener("input", searchResources);
-  $("#category-filter").addEventListener("change", searchResources);
-  $("#sort-filter")?.addEventListener("change", searchResources);
-  $("#search-clear")?.addEventListener("click", clearSearch);
+  const searchInput = $("#search-input");
+  if (searchInput) {
+    searchInput.addEventListener("input", searchResources);
+  }
+
+  const categoryFilter = $("#category-filter");
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", searchResources);
+  }
+
+  const sortFilter = $("#sort-filter");
+  if (sortFilter) {
+    sortFilter.addEventListener("change", searchResources);
+  }
+
+  const searchClear = $("#search-clear");
+  if (searchClear) {
+    searchClear.addEventListener("click", clearSearch);
+  }
 
   // Search on enter key
-  $("#search-input").addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      searchResources();
-    }
-  });
+  if (searchInput) {
+    searchInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        searchResources();
+      }
+    });
+  }
 
   // Enhanced search button
-  $(".search-btn")?.addEventListener("click", function (e) {
-    e.preventDefault();
-    searchResources();
+  const searchBtn = $(".search-btn");
+  if (searchBtn) {
+    searchBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      searchResources();
 
-    // Add search animation
-    this.style.transform = "scale(0.95)";
-    setTimeout(() => {
-      this.style.transform = "";
-    }, 150);
-  });
+      // Add search animation
+      this.style.transform = "scale(0.95)";
+      setTimeout(() => {
+        this.style.transform = "";
+      }, 150);
+    });
+  }
 
   // Upload form
-  $("#upload-form").addEventListener("submit", handleUpload);
+  const uploadForm = $("#upload-form");
+  if (uploadForm) {
+    uploadForm.addEventListener("submit", handleUpload);
+  }
 
   // File upload drag and drop
   const fileUpload = $(".file-upload");
