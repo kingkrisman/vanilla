@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AcademicHub - Vanilla Version</title>
+    <link
+      rel="icon"
+      type="image/webp"
+      href="https://cdn.builder.io/api/v1/image/assets%2F25254e0e171d4040bc8cd6eb90b06e01%2Fa2d8563c57344a179d4dd19495459a39?format=webp&width=32"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Authentication Modal -->
+    <div id="auth-modal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+
+        <!-- Login Form -->
+        <div id="login-form" class="auth-form">
+          <div class="logo-section">
+            <div class="logo">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 7v14"></path>
+                <path
+                  d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"
+                ></path>
+              </svg>
+            </div>
+            <h2>Welcome Back</h2>
+            <p>Log in to your AcademicHub account</p>
+          </div>
+
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" required />
+            </div>
+
+            <div class="form-group">
+              <label for="password">Password</label>
+              <div class="password-input">
+                <input type="password" id="password" name="password" required />
+                <button
+                  type="button"
+                  class="toggle-password"
+                  onclick="togglePassword('password')"
+                >
+                  👁️
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Log In</button>
+
+            <div class="demo-credentials">
+              <p>Demo Credentials:</p>
+              <button
+                type="button"
+                onclick="fillDemoCredentials('student')"
+                class="btn-demo"
+              >
+                Student Demo
+              </button>
+              <button
+                type="button"
+                onclick="fillDemoCredentials('lecturer')"
+                class="btn-demo"
+              >
+                Lecturer Demo
+              </button>
+              <small
+                >Student: student@demo.com / student123<br />Lecturer:
+                lecturer@demo.com / lecturer123</small
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app">
+      <!-- Header -->
+      <header class="header">
+        <div class="container">
+          <div class="header-left">
+            <div class="brand">
+              <div class="logo">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M12 7v14"></path>
+                  <path
+                    d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"
+                  ></path>
+                </svg>
+              </div>
+              <span class="brand-text">AcademicHub</span>
+            </div>
+            <div id="user-badge" class="badge" style="display: none">
+              Student
+            </div>
+          </div>
+
+          <nav id="main-nav" class="nav" style="display: none">
+            <a href="#" class="nav-link active" data-page="dashboard"
+              >Dashboard</a
+            >
+            <a href="#" class="nav-link" data-page="resources">Resources</a>
+            <a
+              href="#"
+              class="nav-link"
+              data-page="upload"
+              id="upload-nav"
+              style="display: none"
+              >Upload</a
+            >
+          </nav>
+
+          <div class="header-right">
+            <div id="auth-buttons" class="auth-buttons">
+              <button class="btn-ghost" onclick="showLogin()">Log In</button>
+              <button class="btn-primary" onclick="showLogin()">Sign Up</button>
+            </div>
+
+            <div id="user-menu" class="user-menu" style="display: none">
+              <button
+                class="btn-primary"
+                id="upload-btn"
+                style="display: none"
+                onclick="navigateToPage('upload')"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" x2="12" y1="3" y2="15"></line>
+                </svg>
+                Upload Resource
+              </button>
+
+              <div class="dropdown">
+                <button class="user-avatar" onclick="toggleDropdown()">
+                  <span id="user-initial">U</span>
+                </button>
+                <div
+                  id="dropdown-menu"
+                  class="dropdown-content"
+                  style="display: none"
+                >
+                  <div class="user-info">
+                    <p id="user-name">User Name</p>
+                    <p id="user-email">user@email.com</p>
+                  </div>
+                  <hr />
+                  <button onclick="switchRole()" id="role-switch">
+                    Switch to Lecturer
+                  </button>
+                  <button onclick="logout()">Log out</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page active">
+          <div class="container">
+            <div class="page-header">
+              <h1>Dashboard</h1>
+              <p>Welcome to your academic dashboard</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-content">
+                  <h3>Total Resources</h3>
+                  <p class="stat-number">24</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                  <h3>Students</h3>
+                  <p class="stat-number">156</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-content">
+                  <h3>Views This Week</h3>
+                  <p class="stat-number">1,247</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-content">
+                  <h3>Average Rating</h3>
+                  <p class="stat-number">4.8</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="dashboard-grid">
+              <div class="card">
+                <h3>Recent Activity</h3>
+                <div class="activity-list">
+                  <div class="activity-item">
+                    <div class="activity-icon">📄</div>
+                    <div class="activity-content">
+                      <p>
+                        <strong>JavaScript Fundamentals</strong> was uploaded
+                      </p>
+                      <small>2 hours ago</small>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon">👤</div>
+                    <div class="activity-content">
+                      <p><strong>John Doe</strong> downloaded React Guide</p>
+                      <small>4 hours ago</small>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon">💬</div>
+                    <div class="activity-content">
+                      <p>New comment on <strong>CSS Layouts</strong></p>
+                      <small>1 day ago</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <h3>Quick Actions</h3>
+                <div class="quick-actions">
+                  <button class="action-btn" onclick="navigateToPage('upload')">
+                    <span>📤</span>
+                    Upload Resource
+                  </button>
+                  <button
+                    class="action-btn"
+                    onclick="navigateToPage('resources')"
+                  >
+                    <span>🔍</span>
+                    Browse Resources
+                  </button>
+                  <button class="action-btn">
+                    <span>📊</span>
+                    View Analytics
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resources Page -->
+        <div id="resources-page" class="page">
+          <div class="container">
+            <div class="page-header">
+              <h1>Resources</h1>
+              <p>Discover and download educational materials</p>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="search-section">
+              <div class="search-bar">
+                <input
+                  type="text"
+                  placeholder="Search resources..."
+                  id="search-input"
+                />
+                <button class="btn-primary">Search</button>
+              </div>
+              <div class="filters">
+                <select id="category-filter">
+                  <option value="">All Categories</option>
+                  <option value="javascript">JavaScript</option>
+                  <option value="react">React</option>
+                  <option value="css">CSS</option>
+                  <option value="html">HTML</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Resources Grid -->
+            <div class="resources-grid" id="resources-grid">
+              <!-- Resources will be populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Page -->
+        <div id="upload-page" class="page">
+          <div class="container">
+            <div class="page-header">
+              <h1>Upload Resource</h1>
+              <p>Share educational materials with students</p>
+            </div>
+
+            <div class="upload-form-container">
+              <form id="upload-form" class="upload-form">
+                <div class="form-group">
+                  <label for="title">Resource Title</label>
+                  <input type="text" id="title" name="title" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="description">Description</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows="4"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="category">Category</label>
+                  <select id="category" name="category" required>
+                    <option value="">Select a category</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="react">React</option>
+                    <option value="css">CSS</option>
+                    <option value="html">HTML</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="file">File</label>
+                  <div class="file-upload">
+                    <input
+                      type="file"
+                      id="file"
+                      name="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx"
+                    />
+                    <div class="file-upload-text">
+                      <p>Click to upload or drag and drop</p>
+                      <small>PDF, DOC, DOCX, PPT, PPTX (max 10MB)</small>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                  Upload Resource
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
