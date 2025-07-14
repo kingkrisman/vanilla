@@ -751,12 +751,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Login form
-  $("#loginForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const email = $("#email").value;
-    const password = $("#password").value;
-    login(email, password);
-  });
+  const loginForm = $("#loginForm");
+  if (loginForm) {
+    loginForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const email = $("#login-email").value;
+      const password = $("#login-password").value;
+      login(email, password);
+    });
+  }
 
   // Navigation links
   $$(".nav-link").forEach((link) => {
