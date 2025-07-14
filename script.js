@@ -486,12 +486,10 @@ function updateUI() {
     // Show/hide role-specific elements
     if (user.role === "lecturer") {
       showElement("#upload-nav");
-      showElement("#upload-btn");
       $("#role-switch").textContent = "Switch to Student";
       $("#user-badge").className = "badge";
     } else {
       hideElement("#upload-nav");
-      hideElement("#upload-btn");
       $("#role-switch").textContent = "Switch to Lecturer";
       $("#user-badge").className = "badge";
       $("#user-badge").style.background = "rgba(158, 163, 174, 0.2)";
