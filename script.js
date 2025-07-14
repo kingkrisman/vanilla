@@ -751,8 +751,9 @@ function updateDashboardContent() {
     }, 100);
   } else if (user && user.role === "student") {
     dashboardContent.innerHTML = createStudentDashboard();
+    // Initialize student-specific features
     setTimeout(() => {
-      animateDashboardStats();
+      initializeStudentDashboard();
     }, 100);
   } else {
     dashboardContent.innerHTML = createGuestDashboard();
