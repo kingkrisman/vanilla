@@ -1104,7 +1104,7 @@ body::before {
 .header-right {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: 29px;
 }
 
 .auth-buttons {
