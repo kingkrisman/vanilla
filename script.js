@@ -2743,3 +2743,362 @@ function showCourseOverview() {
 
 // Expose new navigation functions
 window.showCourseOverview = showCourseOverview;
+
+// Comprehensive Student Dashboard Functions
+function startStudySession() {
+  showNotification(
+    "Study session started! 📚 Focus mode activated.",
+    "success",
+  );
+
+  // Simulate study session tracking
+  const studyModal = document.createElement("div");
+  studyModal.className = "modal";
+  studyModal.innerHTML = `
+    <div class="modal-content study-session-modal">
+      <div class="study-header">
+        <h3>Study Session Active</h3>
+        <div class="study-timer">
+          <div class="timer-display">25:00</div>
+          <div class="timer-controls">
+            <button class="btn-secondary" onclick="pauseStudySession()">Pause</button>
+            <button class="btn-primary" onclick="endStudySession()">End Session</button>
+          </div>
+        </div>
+      </div>
+      <div class="study-subject-selector">
+        <label>What are you studying?</label>
+        <select id="study-subject">
+          <option value="cs301">Data Structures & Algorithms</option>
+          <option value="cs305">Database Systems</option>
+          <option value="cs350">Software Engineering</option>
+          <option value="math320">Discrete Mathematics</option>
+        </select>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(studyModal);
+  setTimeout(() => studyModal.remove(), 5000);
+}
+
+function viewAllCourses() {
+  showNotification("Opening course catalog...", "info");
+}
+
+function viewAssignments() {
+  showNotification("Loading assignments dashboard...", "info");
+}
+
+function viewAnalytics() {
+  showNotification("Opening detailed analytics...", "info");
+}
+
+function viewGrades() {
+  showNotification("Loading grade report...", "info");
+}
+
+function viewFullSchedule() {
+  showNotification("Opening full schedule view...", "info");
+}
+
+function addNewAssignment() {
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="modal-content assignment-modal">
+      <div class="modal-header">
+        <h3>Add New Assignment</h3>
+        <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+      </div>
+      <form class="assignment-form">
+        <div class="form-group">
+          <label>Assignment Title</label>
+          <input type="text" placeholder="Enter assignment title" required>
+        </div>
+        <div class="form-group">
+          <label>Course</label>
+          <select required>
+            <option value="">Select course</option>
+            <option value="cs301">CS301 - Data Structures</option>
+            <option value="cs305">CS305 - Database Systems</option>
+            <option value="cs350">CS350 - Software Engineering</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" required>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary">Add Assignment</button>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function editAssignment(id) {
+  showNotification(`Editing assignment ${id}...`, "info");
+}
+
+function viewAllAssignments() {
+  showNotification("Opening assignments manager...", "info");
+}
+
+function enrollInCourse() {
+  showNotification("Opening course enrollment...", "info");
+}
+
+function updateStudyAnalytics(period) {
+  showNotification(`Analytics updated for ${period} view`, "info");
+}
+
+function viewAllActivity() {
+  showNotification("Loading activity history...", "info");
+}
+
+function viewAllAchievements() {
+  showNotification("Opening achievements gallery...", "info");
+}
+
+// Study Tools Functions
+function openNotepad() {
+  const notepad = document.createElement("div");
+  notepad.className = "modal";
+  notepad.innerHTML = `
+    <div class="modal-content notepad-modal">
+      <div class="modal-header">
+        <h3>Quick Notes</h3>
+        <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+      </div>
+      <div class="notepad-content">
+        <textarea placeholder="Start taking notes..." rows="10" style="width: 100%; resize: vertical; padding: 1rem; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--glass-bg); color: var(--neutral-50);"></textarea>
+        <div class="notepad-actions" style="margin-top: 1rem; display: flex; gap: 1rem;">
+          <button class="btn-primary">Save Note</button>
+          <button class="btn-secondary">Clear</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(notepad);
+}
+
+function openCalculator() {
+  showNotification("Opening calculator...", "info");
+}
+
+function openPomodoroTimer() {
+  const timer = document.createElement("div");
+  timer.className = "modal";
+  timer.innerHTML = `
+    <div class="modal-content pomodoro-modal">
+      <div class="modal-header">
+        <h3>Pomodoro Timer</h3>
+        <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+      </div>
+      <div class="pomodoro-content" style="text-align: center; padding: 2rem;">
+        <div class="timer-circle" style="width: 200px; height: 200px; border: 8px solid var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 2rem; font-weight: bold; color: var(--primary-400);">
+          25:00
+        </div>
+        <div class="timer-controls" style="display: flex; gap: 1rem; justify-content: center;">
+          <button class="btn-primary">Start</button>
+          <button class="btn-secondary">Pause</button>
+          <button class="btn-secondary">Reset</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(timer);
+}
+
+function openStudyGroups() {
+  showNotification("Loading study groups...", "info");
+}
+
+function openLibrary() {
+  navigateToPage("resources");
+}
+
+function openMessaging() {
+  showNotification("Opening messaging system...", "info");
+}
+
+function pauseStudySession() {
+  showNotification("Study session paused", "info");
+}
+
+function endStudySession() {
+  showNotification("Study session completed! Great work! 🎉", "success");
+
+  // Update study streak
+  StudentData.stats.studyStreak++;
+  StudentData.stats.totalStudyHours += 0.5;
+
+  // Remove modal
+  const modal = document.querySelector(".study-session-modal");
+  if (modal) {
+    modal.parentElement.remove();
+  }
+}
+
+// Initialize student dashboard features
+function initializeStudentDashboard() {
+  // Initialize progress circles
+  setTimeout(() => {
+    initializeProgressCircles();
+    animateStudentStats();
+    initializeStudyChart();
+  }, 300);
+}
+
+function initializeProgressCircles() {
+  $$(".progress-circle").forEach((circle) => {
+    const progress = circle.dataset.progress || 0;
+    const strokeDasharray = `${progress}, 100`;
+    const pathElement = circle.querySelector(".circle");
+    if (pathElement) {
+      pathElement.style.strokeDasharray = strokeDasharray;
+    }
+  });
+}
+
+function animateStudentStats() {
+  const statCards = $$(".student-stats-grid .stat-card");
+
+  statCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.animation = "fadeInUp 0.6s ease-out forwards";
+      card.style.opacity = "0";
+
+      setTimeout(() => {
+        card.style.opacity = "1";
+
+        // Animate the number
+        const numberElement = card.querySelector(".stat-number");
+        if (numberElement && !isNaN(parseInt(numberElement.textContent))) {
+          const finalValue = parseInt(numberElement.textContent);
+          animateValue(numberElement, 0, finalValue, 1000);
+        }
+      }, 100);
+    }, index * 150);
+  });
+}
+
+function initializeStudyChart() {
+  const canvas = $("#study-chart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Sample study data
+  const data = [4, 6, 5, 8, 7, 9, 6];
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+
+  // Draw chart
+  drawStudyChart(ctx, data, labels, width, height);
+}
+
+function drawStudyChart(ctx, data, labels, width, height) {
+  const padding = 30;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  const max = Math.max(...data);
+  const min = 0;
+  const range = max - min || 1;
+
+  // Set styles
+  ctx.strokeStyle = "#10b981";
+  ctx.fillStyle = "rgba(16, 185, 129, 0.1)";
+  ctx.lineWidth = 3;
+
+  // Draw area fill
+  ctx.beginPath();
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    if (index === 0) {
+      ctx.moveTo(x, height - padding);
+      ctx.lineTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+
+  ctx.lineTo(width - padding, height - padding);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw line
+  ctx.beginPath();
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  // Draw points
+  ctx.fillStyle = "#10b981";
+  data.forEach((value, index) => {
+    const x = padding + (index / (data.length - 1)) * chartWidth;
+    const y = height - padding - ((value - min) / range) * chartHeight;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw labels
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.font = "10px Inter";
+  ctx.textAlign = "center";
+
+  labels.forEach((label, index) => {
+    const x = padding + (index / (labels.length - 1)) * chartWidth;
+    ctx.fillText(label, x, height - 10);
+  });
+}
+
+// Expose all student functions
+window.startStudySession = startStudySession;
+window.viewAllCourses = viewAllCourses;
+window.viewAnalytics = viewAnalytics;
+window.viewGrades = viewGrades;
+window.viewFullSchedule = viewFullSchedule;
+window.addNewAssignment = addNewAssignment;
+window.editAssignment = editAssignment;
+window.viewAllAssignments = viewAllAssignments;
+window.enrollInCourse = enrollInCourse;
+window.updateStudyAnalytics = updateStudyAnalytics;
+window.viewAllActivity = viewAllActivity;
+window.viewAllAchievements = viewAllAchievements;
+window.openNotepad = openNotepad;
+window.openCalculator = openCalculator;
+window.openPomodoroTimer = openPomodoroTimer;
+window.openStudyGroups = openStudyGroups;
+window.openLibrary = openLibrary;
+window.openMessaging = openMessaging;
+window.pauseStudySession = pauseStudySession;
+window.endStudySession = endStudySession;
+window.initializeStudentDashboard = initializeStudentDashboard;
