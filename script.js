@@ -439,22 +439,142 @@ function viewResource(id) {
 function searchResources() {
   const query = $("#search-input").value.toLowerCase();
   const category = $("#category-filter").value;
+  const sortBy = $("#sort-filter").value;
+  const clearBtn = $("#search-clear");
 
-  let filtered = AppState.resources;
+  // Show/hide clear button
+  if (query) {
+    clearBtn.style.display = "block";
+  } else {
+    clearBtn.style.display = "none";
+  }
 
+  let filtered = [...AppState.resources];
+
+  // Filter by search query
   if (query) {
     filtered = filtered.filter(
       (resource) =>
         resource.title.toLowerCase().includes(query) ||
-        resource.description.toLowerCase().includes(query),
+        resource.description.toLowerCase().includes(query) ||
+        resource.author.toLowerCase().includes(query),
     );
   }
 
+  // Filter by category
   if (category) {
     filtered = filtered.filter((resource) => resource.category === category);
   }
 
+  // Sort results
+  switch (sortBy) {
+    case "popular":
+      filtered.sort((a, b) => b.downloads - a.downloads);
+      break;
+    case "recent":
+      filtered.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+      break;
+    case "rating":
+      // Simulate rating system
+      filtered.sort(() => Math.random() - 0.5);
+      break;
+    case "downloads":
+      filtered.sort((a, b) => b.downloads - a.downloads);
+      break;
+  }
+
   renderResources(filtered);
+
+  // Show search results count
+  updateSearchResults(filtered.length, AppState.resources.length);
+}
+
+function clearSearch() {
+  $("#search-input").value = "";
+  $("#search-clear").style.display = "none";
+  searchResources();
+}
+
+function updateSearchResults(found, total) {
+  const existingResult = $(".search-results");
+  if (existingResult) existingResult.remove();
+
+  const resultElement = document.createElement("div");
+  resultElement.className = "search-results";
+  resultElement.innerHTML = `
+    <p>Showing ${found} of ${total} resources</p>
+  `;
+  resultElement.style.cssText = `
+    margin: var(--space-4) 0;
+    color: var(--neutral-400);
+    font-size: var(--font-size-sm);
+    text-align: center;
+  `;
+
+  const resourcesGrid = $("#resources-grid");
+  resourcesGrid.parentNode.insertBefore(resultElement, resourcesGrid);
+}
+
+function showAnalytics() {
+  showNotification("Analytics dashboard coming soon!", "info");
+
+  // Simulate analytics modal
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="modal-content analytics-modal">
+      <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+      <h2>Analytics Dashboard</h2>
+      <div class="analytics-grid">
+        <div class="analytics-chart">
+          <h3>Resource Views</h3>
+          <div class="chart-placeholder">📊 Chart visualization</div>
+        </div>
+        <div class="analytics-chart">
+          <h3>Download Trends</h3>
+          <div class="chart-placeholder">📈 Trend analysis</div>
+        </div>
+        <div class="analytics-chart">
+          <h3>User Engagement</h3>
+          <div class="chart-placeholder">👥 Engagement metrics</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add analytics modal styles
+  const style = document.createElement("style");
+  style.textContent = `
+    .analytics-modal {
+      max-width: 800px;
+      width: 90vw;
+    }
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-6);
+    }
+    .analytics-chart {
+      background: var(--glass-bg);
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--glass-border);
+    }
+    .chart-placeholder {
+      height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-hover);
+      border-radius: var(--radius-md);
+      margin-top: var(--space-2);
+      font-size: var(--font-size-lg);
+    }
+  `;
+
+  document.head.appendChild(style);
+  document.body.appendChild(modal);
 }
 
 // Upload functions
@@ -597,9 +717,30 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Search functionality
+  // Enhanced search functionality
   $("#search-input").addEventListener("input", searchResources);
   $("#category-filter").addEventListener("change", searchResources);
+  $("#sort-filter")?.addEventListener("change", searchResources);
+  $("#search-clear")?.addEventListener("click", clearSearch);
+
+  // Search on enter key
+  $("#search-input").addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      searchResources();
+    }
+  });
+
+  // Enhanced search button
+  $(".search-btn")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    searchResources();
+
+    // Add search animation
+    this.style.transform = "scale(0.95)";
+    setTimeout(() => {
+      this.style.transform = "";
+    }, 150);
+  });
 
   // Upload form
   $("#upload-form").addEventListener("submit", handleUpload);
@@ -786,3 +927,5 @@ window.toggleDropdown = toggleDropdown;
 window.downloadResource = downloadResource;
 window.viewResource = viewResource;
 window.animateDashboardStats = animateDashboardStats;
+window.showAnalytics = showAnalytics;
+window.clearSearch = clearSearch;
