@@ -1056,6 +1056,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  margin-right: -5px;
 }
 
 .nav-link {
@@ -1104,7 +1105,7 @@ body::before {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 29px;
+  gap: 16px;
 }
 
 .auth-buttons {
