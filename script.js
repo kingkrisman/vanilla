@@ -2,6 +2,8 @@
 const AppState = {
   user: null,
   currentPage: "dashboard",
+  theme: localStorage.getItem("academicHub_theme") || "dark",
+  currentAuthTab: "login",
   resources: [
     {
       id: 1,
@@ -174,8 +176,14 @@ function hideLogin() {
 }
 
 function login(email, password) {
-  const loginBtn = $('#loginForm button[type="submit"]');
-  addLoadingState(loginBtn, 1500);
+  const loginBtn = $(".auth-submit .btn-text");
+  const loader = $(".auth-submit .btn-loader");
+  const submitBtn = $(".auth-submit");
+
+  // Show loading state
+  loginBtn.style.opacity = "0";
+  loader.style.display = "block";
+  submitBtn.disabled = true;
 
   setTimeout(() => {
     const user = demoUsers.find(
@@ -186,31 +194,50 @@ function login(email, password) {
       AppState.user = user;
       localStorage.setItem("academicHub_user", JSON.stringify(user));
 
-      // Add success animation
-      const modal = $("#auth-modal");
-      modal.style.animation = "modalSuccess 0.5s ease-out forwards";
+      // Success feedback
+      loginBtn.textContent = "Success!";
+      loginBtn.style.opacity = "1";
+      loader.style.display = "none";
+      submitBtn.style.background = "var(--accent-success)";
 
       setTimeout(() => {
         updateUI();
         hideLogin();
         showNotification(`Welcome back, ${user.name}!`, "success");
 
+        // Reset button
+        loginBtn.textContent = "Sign In";
+        submitBtn.style.background = "";
+        submitBtn.disabled = false;
+
         // Animate dashboard elements on first load
         setTimeout(() => {
           animateDashboardStats();
         }, 500);
-      }, 500);
+      }, 1000);
       return true;
     } else {
+      // Error feedback
+      loginBtn.textContent = "Invalid credentials";
+      loginBtn.style.opacity = "1";
+      loader.style.display = "none";
+      submitBtn.style.background = "var(--accent-secondary)";
+
       // Add shake animation for error
       const modal = $(".modal-content");
       modal.style.animation = "shake 0.5s ease-in-out";
       setTimeout(() => (modal.style.animation = ""), 500);
 
+      setTimeout(() => {
+        loginBtn.textContent = "Sign In";
+        submitBtn.style.background = "";
+        submitBtn.disabled = false;
+      }, 2000);
+
       showNotification("Invalid email or password", "error");
       return false;
     }
-  }, 1000);
+  }, 1500);
 }
 
 function logout() {
@@ -232,8 +259,8 @@ function switchRole() {
 }
 
 function fillDemoCredentials(role) {
-  const emailInput = $("#email");
-  const passwordInput = $("#password");
+  const emailInput = $("#login-email");
+  const passwordInput = $("#login-password");
 
   if (role === "student") {
     emailInput.value = "student@demo.com";
@@ -242,19 +269,37 @@ function fillDemoCredentials(role) {
     emailInput.value = "lecturer@demo.com";
     passwordInput.value = "lecturer123";
   }
+
+  // Add visual feedback
+  [emailInput, passwordInput].forEach((input) => {
+    input.style.borderColor = "var(--accent-success)";
+    setTimeout(() => {
+      input.style.borderColor = "";
+    }, 2000);
+  });
 }
 
 function togglePassword(fieldId) {
   const field = $("#" + fieldId);
   const button = field.nextElementSibling;
+  const eyeOpen = button.querySelector(".eye-open");
+  const eyeClosed = button.querySelector(".eye-closed");
 
   if (field.type === "password") {
     field.type = "text";
-    button.textContent = "🙈";
+    eyeOpen.style.display = "none";
+    eyeClosed.style.display = "block";
   } else {
     field.type = "password";
-    button.textContent = "👁️";
+    eyeOpen.style.display = "block";
+    eyeClosed.style.display = "none";
   }
+
+  // Add animation
+  button.style.transform = "scale(0.9)";
+  setTimeout(() => {
+    button.style.transform = "";
+  }, 150);
 }
 
 // Enhanced navigation with smooth transitions
