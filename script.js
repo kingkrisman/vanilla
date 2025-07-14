@@ -2205,3 +2205,15 @@ window.messageStudents = messageStudents;
 window.scheduleClass = scheduleClass;
 window.viewReports = viewReports;
 window.viewAssignments = viewAssignments;
+
+// New lecturer header navigation functions
+function showCourseOverview() {
+  showNotification("Course overview coming soon!", "info");
+
+  // Update active nav link
+  $$(".nav-link").forEach((link) => link.classList.remove("active"));
+  event.target.closest(".nav-link").classList.add("active");
+}
+
+// Expose new navigation functions
+window.showCourseOverview = showCourseOverview;
