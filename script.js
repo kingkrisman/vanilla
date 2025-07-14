@@ -1529,8 +1529,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // Animate dashboard on initial load if user is logged in
   if (AppState.user && AppState.currentPage === "dashboard") {
     setTimeout(() => {
-      animateDashboardStats();
+      if (AppState.user.role === "lecturer") {
+        // Lecturer dashboard is handled by initializeLecturerDashboard
+      } else {
+        animateDashboardStats();
+      }
     }, 500);
+  }
+
+  // Ensure dashboard content is loaded on initial page load
+  if (AppState.currentPage === "dashboard") {
+    updateDashboardContent();
   }
 });
 
