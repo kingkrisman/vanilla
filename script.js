@@ -539,35 +539,56 @@ function updateDashboardContent() {
 function createLecturerDashboard() {
   return `
     <div class="lecturer-dashboard">
-      <!-- Lecturer Header -->
+            <!-- Lecturer Header -->
       <div class="page-header lecturer-header">
         <div class="header-content">
           <h1>Lecturer Dashboard</h1>
-          <p>Manage your courses, students, and educational content</p>
+          <p>Manage your courses, students, and educational content effectively</p>
+          <div class="subtitle-stats">
+            <div class="subtitle-stat">
+              <span class="stat-icon">📚</span>
+              <span class="stat-value">${LecturerData.stats.coursesManaged}</span>
+              <span>Active Courses</span>
+            </div>
+            <div class="subtitle-stat">
+              <span class="stat-icon">👥</span>
+              <span class="stat-value">${LecturerData.stats.activeStudents}</span>
+              <span>Students</span>
+            </div>
+            <div class="subtitle-stat">
+              <span class="stat-icon">⭐</span>
+              <span class="stat-value">${LecturerData.stats.averageRating}/5</span>
+              <span>Rating</span>
+            </div>
+          </div>
         </div>
         <div class="header-actions">
-          <button class="btn-primary" onclick="navigateToPage('upload')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" x2="12" y1="3" y2="15"></line>
-            </svg>
-            Upload Resource
-          </button>
-          <button class="btn-secondary" onclick="createNewCourse()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="16"></line>
-              <line x1="8" y1="12" x2="16" y2="12"></line>
-            </svg>
-            New Course
-          </button>
-          <button class="btn-secondary" onclick="createAnnouncement()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
-            </svg>
-            Announcement
-          </button>
+          <div class="action-row primary">
+            <button class="btn-primary" onclick="navigateToPage('upload')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" x2="12" y1="3" y2="15"></line>
+              </svg>
+              Upload Resource
+            </button>
+          </div>
+          <div class="action-row secondary">
+            <button class="btn-secondary" onclick="createNewCourse()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              New Course
+            </button>
+            <button class="btn-secondary" onclick="createAnnouncement()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+              </svg>
+              Announcement
+            </button>
+          </div>
         </div>
       </div>
 
